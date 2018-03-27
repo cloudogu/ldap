@@ -54,6 +54,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   CONFIG_DISPLAYNAME=$(doguctl config "admin_displayname") || CONFIG_DISPLAYNAME="admin"
   ADMIN_DISPLAYNAME=${CONFIG_DISPLAYNAME:-CES Administrator}
 
+  MANAGER_GROUP=$(doguctl config --global "manager_group") || MANAGER_GROUP="cesManager"
   ADMIN_GROUP=$(doguctl config --global admin_group) || ADMIN_GROUP="cesAdmin"
   ADMIN_MEMBER=$(doguctl config admin_member) || ADMIN_MEMBER="false"
 

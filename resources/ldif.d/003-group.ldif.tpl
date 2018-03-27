@@ -2,9 +2,9 @@
 #
 version: 1
 
-dn: cn=cesManager,ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
-cn: cesManager
-description: Members of the cesManager group have full access to the cloudogu administration applications
+dn: cn=${MANAGER_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
+cn: ${MANAGER_GROUP}
+description: Members of the ${MANAGER_GROUP} group have full access to the cloudogu administration applications
 member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 objectClass: top
