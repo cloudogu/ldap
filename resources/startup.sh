@@ -26,13 +26,16 @@ ulimit -n ${OPENLDAP_ULIMIT}
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
+  echo "initializing ldap"
 
   # set stage for health check
   doguctl state installing
 
+  echo "removing old config files"
   # remove default configuration
   rm -f ${OPENLDAP_ETC_DIR}/*.conf
 
+  echo "get domain and root password"
   # get domain and root password
   LDAP_ROOTPASS=$(doguctl random)
   doguctl config -e rootpwd ${LDAP_ROOTPASS}
@@ -40,6 +43,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   LDAP_BASE_DOMAIN=$(doguctl config --global domain)
   LDAP_DOMAIN=$(doguctl config --global domain)
 
+  echo "get admin user details"
   CONFIG_USERNAME=$(doguctl config "admin_username")
   ADMIN_USERNAME=${CONFIG_USERNAME:-admin}
 
@@ -54,10 +58,12 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   CONFIG_DISPLAYNAME=$(doguctl config "admin_displayname") || CONFIG_DISPLAYNAME="admin"
   ADMIN_DISPLAYNAME=${CONFIG_DISPLAYNAME:-CES Administrator}
 
+  echo "get manager and admin group name"
   MANAGER_GROUP=$(doguctl config --global "manager_group") || MANAGER_GROUP="cesManager"
   ADMIN_GROUP=$(doguctl config --global admin_group) || ADMIN_GROUP="cesAdmin"
   ADMIN_MEMBER=$(doguctl config admin_member) || ADMIN_MEMBER="false"
 
+  echo "get admin password"
   # TODO remove from etcd ???
   CONFIG_PASSWORD=$(doguctl config -e "admin_password")
   ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
@@ -66,10 +72,12 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
+    echo "rendering ldap.conf template"
     render_template /srv/openldap/conf.d/ldap.conf.tpl > ${OPENLDAP_ETC_DIR}/ldap.conf
   fi
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
+    echo "rendering slapd-config.ldif template"
     render_template /srv/openldap/conf.d/slapd-config.ldif.tpl > ${OPENLDAP_ETC_DIR}/slapd-config.ldif
   fi
 
