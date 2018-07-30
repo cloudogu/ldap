@@ -11,11 +11,6 @@
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
   "Volumes": [{
-    "Name": "config",
-    "Path": "/etc/ceslap",
-    "Owner": "102",
-    "Group": "102"
-  },{
 		"Name": "db",
     "Path": "/var/lib/openldap",
     "Owner": "102",
