@@ -11,11 +11,12 @@
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
   "Volumes": [{
-		"Name": "db",
+    "Name": "db",
     "Path": "/var/lib/openldap",
     "Owner": "102",
-    "Group": "102"
-	}],
+    "Group": "102",
+    "NeedsBackup": "true"
+  }],
   "ExposedCommands": [{
     "Name": "service-account-create",
     "Description": "Creates a new service account",
