@@ -15,7 +15,7 @@
     "Path": "/var/lib/openldap",
     "Owner": "102",
     "Group": "102",
-    "NeedsBackup": "true"
+    "NeedsBackup": true
   }],
   "ExposedCommands": [{
     "Name": "service-account-create",
