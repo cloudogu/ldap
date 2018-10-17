@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/base:3.5-2
+FROM registry.cloudogu.com/official/base:3.5-5
 
 MAINTAINER stephan christann <stephan.christann@christann.net>
 
