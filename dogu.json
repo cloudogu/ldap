@@ -31,9 +31,13 @@
   ],
   "ExposedCommands": [
     {
+      "Name": "pre-upgrade",
+      "Command": "/pre-upgrade.sh"
+    },
+    {
       "Name": "service-account-create",
       "Description": "Creates a new service account",
-      "Command": "/srv/openldap/create-sa.sh"
+      "Command": "/create-sa.sh"
     }
   ],
   "HealthChecks": [

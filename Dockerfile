@@ -7,7 +7,7 @@ RUN apk add --update openldap openldap-clients openldap-back-hdb \
  && rm -rf /var/cache/apk/*
 
 # ADD resources
-ADD resources /srv/openldap
+ADD resources /
 
 # VOLUMES
 VOLUME ["/var/lib/ldap", "/etc/cesldap"]
@@ -16,4 +16,4 @@ VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 EXPOSE 389
 
 # FIRE IT UP
-CMD ["/srv/openldap/startup.sh"]
+CMD ["/startup.sh"]

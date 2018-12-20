@@ -24,6 +24,20 @@ OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
+# config migration from an old dogu version needed?
+if [[ -d ${OPENLDAP_BACKEND_DIR}/migration ]]; then
+  echo "migrating config folder"
+  echo "migration dir:"
+  ls -lan ${OPENLDAP_BACKEND_DIR}/migration
+  echo "etc_dir:"
+  ls -lan ${OPENLDAP_ETC_DIR}
+  mv ${OPENLDAP_BACKEND_DIR}/migration/* ${OPENLDAP_ETC_DIR}
+  echo "Done! Config_dir:"
+  ls -lan ${OPENLDAP_ETC_DIR}
+  ls -lan ${OPENLDAP_ETC_DIR}/*
+  rm -rf ${OPENLDAP_BACKEND_DIR}/migration
+fi
+
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "initializing ldap"
@@ -129,5 +143,7 @@ fi
 
 # set stage for health check
 doguctl state ready
-
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d $LOGLEVEL
+echo "DEBUG: config dir:"
+ls -lan /etc/openldap/slapd.d/cn=config/*
+echo "DEBUG: initialization done, starting ldap now"
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d 16
