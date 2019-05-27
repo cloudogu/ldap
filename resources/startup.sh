@@ -86,6 +86,8 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
   chown -R ldap:ldap ${OPENLDAP_BACKEND_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR} ${OPENLDAP_BACKEND_DIR}
+  mkdir -p ${OPENLDAP_RUN_DIR}
+  chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
   if [[ -d /srv/openldap/ldif.d ]]; then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
