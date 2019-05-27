@@ -1,9 +1,9 @@
-FROM registry.cloudogu.com/official/base:3.5-5
+FROM registry.cloudogu.com/official/base:3.9.4-1
 
 MAINTAINER stephan christann <stephan.christann@christann.net>
 
 # INSTALL SOFTWARE
-RUN apk add --update openldap openldap-clients openldap-back-hdb \
+RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
  && rm -rf /var/cache/apk/*
 
 # ADD resources
