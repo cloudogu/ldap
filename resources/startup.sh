@@ -1,9 +1,12 @@
 #!/bin/bash
+#shellcheck disable=SC2034  # variables are used for template rendering
 set -o errexit
 set -o nounset
 set -o pipefail
 
+# shellcheck disable=SC1091 # no direct access to the file
 source /etc/ces/functions.sh
+
 
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
@@ -38,8 +41,8 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "get domain and root password"
   # get domain and root password
   LDAP_ROOTPASS=$(doguctl random)
-  doguctl config -e rootpwd ${LDAP_ROOTPASS}
-  LDAP_ROOTPASS_ENC=$(slappasswd -s $LDAP_ROOTPASS)
+  doguctl config -e rootpwd "${LDAP_ROOTPASS}"
+  LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
   LDAP_BASE_DOMAIN=$(doguctl config --global domain)
   LDAP_DOMAIN=$(doguctl config --global domain)
 
@@ -67,7 +70,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # TODO remove from etcd ???
   CONFIG_PASSWORD=$(doguctl config -e "admin_password")
   ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
-  ADMIN_PASSWORD_ENC="$(slappasswd -s $ADMIN_PASSWORD)"
+  ADMIN_PASSWORD_ENC="$(slappasswd -s "$ADMIN_PASSWORD")"
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
@@ -90,18 +93,22 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
   if [[ -d /srv/openldap/ldif.d ]]; then
-    for f in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-      render_template $f > $(echo $f | sed 's/\.tpl//g')
-    done
 
-    slapd_exe=$(which slapd)
+    while IFS= read -r -d '' f
+    do
+      render_template "${f//.tpl/}"
+    done < <(find /srv/openldap/ldif.d -type f -name "*.tpl" | sort)
+
+    slapd_exe=$(command -v slapd)
     echo >&2 "$0 ($slapd_exe): starting initdb daemon"
     slapd -u ldap -g ldap -h ldapi:///
 
-    for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
-      echo >&2 "applying $f"
+    while IFS= read -r -d '' f
+    do
+       echo >&2 "applying $f"
       ldapadd -Y EXTERNAL -f "$f" 2>&1
-    done
+    done < <(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort)
+
     # if ADMIN_MEMBER is true add admin to member group for tool admin rights
     if [[ ${ADMIN_MEMBER} = "true" ]]; then
       ldapmodify -Y EXTERNAL << EOF
@@ -132,4 +139,4 @@ fi
 # set stage for health check
 doguctl state ready
 
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d $LOGLEVEL
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "$LOGLEVEL"
