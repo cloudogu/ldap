@@ -11,13 +11,17 @@ file:
     owner: root
     group: root
     filetype: file
-    
+
 package:
   openldap:
     installed: true
   openldap-back-hdb:
     installed: true
   openldap-clients:
+    installed: true
+  openldap-overlay-memberof:
+    installed: true
+  openldap-overlay-refint:
     installed: true
 
 port:
