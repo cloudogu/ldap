@@ -1,4 +1,4 @@
-<img src="https://cloudogu.com/images/dogus/https://cloudogu.com/images/dogus/openldap.png" alt="redmine logo" height="100px">
+<img src="https://cloudogu.com/images/dogus/openldap.png" alt="openldap logo" height="100px">
 
 
 [![GitHub license](https://img.shields.io/github/license/cloudogu/ldap.svg)](https://github.com/cloudogu/ldap/blob/master/LICENSE)
@@ -14,9 +14,9 @@
 
 **Website:** [https://www.openldap.org](https://www.openldap.org)
 
-**Dependencies:** base
+**Dependencies:** [base](https://github.com/cloudogu/base)
 
-## Installation Ecosystem
+## Installation in EcoSystem
 ```
 cesapp install official/ldap
 
