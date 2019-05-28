@@ -5,7 +5,7 @@
 # See ldap.conf(5) for details
 # This file should be world readable but not world writable.
 
-#BASE   ${OPENLDAP_SUFFIX}
+#BASE   dc=cloudogu,dc=com
 URI    ldapi://
 
 #SIZELIMIT  12

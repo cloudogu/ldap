@@ -7,7 +7,6 @@ set -o pipefail
 # shellcheck disable=SC1091 # no direct access to the file
 source /etc/ces/functions.sh
 
-
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -76,7 +75,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
     echo "rendering ldap.conf template"
-    render_template /srv/openldap/conf.d/ldap.conf.tpl > ${OPENLDAP_ETC_DIR}/ldap.conf
+    doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
   fi
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
