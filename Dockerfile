@@ -1,6 +1,9 @@
 FROM registry.cloudogu.com/official/base:3.9.4-1
 
-MAINTAINER stephan christann <stephan.christann@christann.net>
+LABEL NAME="official/ldap" \
+      VERSION="2.4.47-1" \
+      MAINTAINER="christoph wolfes <christoph.wolfes@cloudogu.com>"
+
 
 # INSTALL SOFTWARE
 RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
