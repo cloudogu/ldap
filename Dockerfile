@@ -2,7 +2,7 @@ FROM registry.cloudogu.com/official/base:3.9.4-1
 
 LABEL NAME="official/ldap" \
       VERSION="2.4.47-1" \
-      MAINTAINER="christoph wolfes <christoph.wolfes@cloudogu.com>"
+      maintainer="christoph.wolfes@cloudogu.com"
 
 
 # INSTALL SOFTWARE
