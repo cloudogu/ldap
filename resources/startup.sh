@@ -1,5 +1,4 @@
 #!/bin/bash
-#shellcheck disable=SC2034  # variables are used for template rendering
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -41,9 +40,11 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # get domain and root password
   LDAP_ROOTPASS=$(doguctl random)
   doguctl config -e rootpwd "${LDAP_ROOTPASS}"
-  export LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
+  LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
+  export LDAP_ROOTPASS_ENC
   LDAP_BASE_DOMAIN=$(doguctl config --global domain)
-  export LDAP_DOMAIN=$(doguctl config --global domain)
+  LDAP_DOMAIN=$(doguctl config --global domain)
+  export LDAP_DOMAIN
 
   echo "get admin user details"
   CONFIG_USERNAME=$(doguctl config "admin_username")
