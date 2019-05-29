@@ -9,8 +9,7 @@ LABEL NAME="official/ldap" \
 RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
  && rm -rf /var/cache/apk/*
 
-# ADD resources
-ADD resources /srv/openldap
+COPY ./resources /
 
 # VOLUMES
 VOLUME ["/var/lib/ldap", "/etc/cesldap"]
@@ -19,4 +18,4 @@ VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 EXPOSE 389
 
 # FIRE IT UP
-CMD ["/srv/openldap/startup.sh"]
+CMD ["/startup.sh"]
