@@ -20,16 +20,21 @@
     if [ X"${TYPE}" = X"rw" ]; then
         OU="Special Users"
     fi
+    export OU
 
     LDAP_DOMAIN=$(doguctl config --global domain)
+    export LDAP_DOMAIN
     # proposal: use doguctl config openldap_suffix in future
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+    export OPENLDAP_SUFFIX
 
     # create random schema suffix and password
     USERNAME="${SERVICE}_$(doguctl random -l 6)"
+    export USERNAME
     PASSWORD=$(doguctl random)
     ENC_PASSWORD=$(slappasswd -s ${PASSWORD})
-    render_template /srv/openldap/new-user.ldif.tpl > /srv/openldap/new-user_${USERNAME}.ldif
+    export ENC_PASSWORD
+    doguctl template /srv/openldap/new-user.ldif.tpl /srv/openldap/new-user_${USERNAME}.ldif
     ldapadd -f "/srv/openldap/new-user_${USERNAME}.ldif"
 
 } >/dev/null 2>&1
