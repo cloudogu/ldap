@@ -71,8 +71,8 @@ olcSizeLimit: 1000
 #		Allow authenticated users read access
 #		Allow anonymous users to authenticate
 #
-#olcAccess: to dn.base="" by * read
-#olcAccess: to dn.base="cn=Subschema" by * read
+#olcAccess: to dn.base= by * read
+#olcAccess: to dn.base=cn=Subschema by * read
 #olcAccess: to *
 #	by self write
 #	by users read
@@ -88,8 +88,8 @@ olcSizeLimit: 1000
 # Allow unlimited access to local connection from the local root user
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
 # Allow unauthenticated read access for schema and base DN autodiscovery
-olcAccess: {1}to dn.exact="" by * read
-olcAccess: {2}to dn.base="cn=Subschema" by * read
+olcAccess: {1}to dn.exact= by * read
+olcAccess: {2}to dn.base=cn=Subschema by * read
 
 #
 # CONFIG DATABASE
@@ -137,16 +137,16 @@ olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=a
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
-  by dn="cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }}" write
+  by dn=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
   by dn.one="ou=Bind Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" read
   by dn.one="ou=Special Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" write
-  by group/organizationalRole/roleOccupant="cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }}" write
+  by group/organizationalRole/roleOccupant=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
   by * none
-olcAccess: to dn.base="" by * read
+olcAccess: to dn.base= by * read
 olcAccess: to *
   by self write
-  by dn="cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }}" write
-  by group/organizationalRole/roleOccupant="cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }}" write
+  by dn=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
+  by group/organizationalRole/roleOccupant=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
   by dn.one="ou=Bind Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" read
   by dn.one="ou=Special Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" write
   by * read
