@@ -38,12 +38,6 @@ node('vagrant') {
                 ecoSystem.build("/dogu")
             }
 
-            stage('Verify') {
-                sh 'cesapp start ldap'
-                sleep 10
-                ecoSystem.verify("/dogu")
-            }
-
         } finally {
             stage('Clean') {
                 ecoSystem.destroy()
