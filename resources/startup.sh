@@ -2,9 +2,6 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-
-source /etc/ces/functions.sh
-
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 LOGLEVEL=${LOGLEVEL:-0}

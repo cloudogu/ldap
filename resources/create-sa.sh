@@ -1,8 +1,6 @@
 #!/bin/bash -e
 
 {
-    source /etc/ces/functions.sh
-
     TYPE="$1"
     SERVICE="$2"
 
