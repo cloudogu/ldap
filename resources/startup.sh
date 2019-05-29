@@ -11,18 +11,18 @@ source /etc/ces/functions.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
-OPENLDAP_ETC_DIR="/etc/openldap"
+export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
-OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
-OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
-OPENLDAP_MODULES_DIR="/usr/lib/openldap"
-OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
-OPENLDAP_BACKEND_DIR="/var/lib/openldap"
-OPENLDAP_BACKEND_DATABASE="hdb"
-OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
+export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
+export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
+export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
+export OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
+export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
+export OPENLDAP_BACKEND_DATABASE="hdb"
+export OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
 OPENLDAP_ULIMIT="2048"
 # proposal: use doguctl config openldap_suffix in future
-OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
@@ -41,9 +41,9 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # get domain and root password
   LDAP_ROOTPASS=$(doguctl random)
   doguctl config -e rootpwd "${LDAP_ROOTPASS}"
-  LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
+  export LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
   LDAP_BASE_DOMAIN=$(doguctl config --global domain)
-  LDAP_DOMAIN=$(doguctl config --global domain)
+  export LDAP_DOMAIN=$(doguctl config --global domain)
 
   echo "get admin user details"
   CONFIG_USERNAME=$(doguctl config "admin_username")
@@ -80,7 +80,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
     echo "rendering slapd-config.ldif template"
-    render_template /srv/openldap/conf.d/slapd-config.ldif.tpl > ${OPENLDAP_ETC_DIR}/slapd-config.ldif
+    doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
   fi
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
