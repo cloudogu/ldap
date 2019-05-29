@@ -6,6 +6,7 @@ set -o pipefail
 
 LOGLEVEL=${LOGLEVEL:-0}
 
+# variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
 export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"

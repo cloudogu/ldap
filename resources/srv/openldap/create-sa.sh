@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+# variables which are used while rendering templates are exported
+
 {
     TYPE="$1"
     SERVICE="$2"
