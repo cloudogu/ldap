@@ -49,21 +49,28 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "get admin user details"
   CONFIG_USERNAME=$(doguctl config "admin_username")
   ADMIN_USERNAME=${CONFIG_USERNAME:-admin}
+  export ADMIN_USERNAME
 
   ADMIN_MAIL=$(doguctl config "admin_mail") ||  ADMIN_MAIL="${ADMIN_USERNAME}@${DOMAIN}"
+  export ADMIN_MAIL
 
   CONFIG_GIVENNAME=$(doguctl config "admin_givenname") || CONFIG_GIVENNAME="admin"
   ADMIN_GIVENNAME=${CONFIG_GIVENNAME:-CES}
+  export ADMIN_GIVENNAME
 
   CONFIG_SURNAME=$(doguctl config "admin_surname") || CONFIG_SURNAME="admin"
   ADMIN_SURNAME=${CONFIG_SURNAME:-Administrator}
+  export ADMIN_SURNAME
 
   CONFIG_DISPLAYNAME=$(doguctl config "admin_displayname") || CONFIG_DISPLAYNAME="admin"
   ADMIN_DISPLAYNAME=${CONFIG_DISPLAYNAME:-CES Administrator}
+  export ADMIN_DISPLAYNAME
 
   echo "get manager and admin group name"
   MANAGER_GROUP=$(doguctl config --global "manager_group") || MANAGER_GROUP="cesManager"
+  export MANAGER_GROUP
   ADMIN_GROUP=$(doguctl config --global admin_group) || ADMIN_GROUP="cesAdmin"
+  export ADMIN_GROUP
   ADMIN_MEMBER=$(doguctl config admin_member) || ADMIN_MEMBER="false"
 
   echo "get admin password"
@@ -71,6 +78,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   CONFIG_PASSWORD=$(doguctl config -e "admin_password")
   ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
   ADMIN_PASSWORD_ENC="$(slappasswd -s $ADMIN_PASSWORD)"
+  export ADMIN_PASSWORD_ENC
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
@@ -94,7 +102,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   if [[ -d /srv/openldap/ldif.d ]]; then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-      render_template $f > $(echo $f | sed 's/\.tpl//g')
+      doguctl template $f $(echo $f | sed 's/\.tpl//g')
     done
 
     slapd_exe=$(which slapd)

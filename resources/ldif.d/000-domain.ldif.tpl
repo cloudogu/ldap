@@ -2,12 +2,12 @@
 #
 version: 1
 
-dn: ${OPENLDAP_SUFFIX}
+dn: {{.Env.Get "OPENLDAP_SUFFIX" }}
 objectClass: top
 objectClass: domain
 
-dn: o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
-o: ${LDAP_DOMAIN}
+dn: o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
+o: {{.Env.Get "LDAP_DOMAIN" }}
 objectClass: top
 objectClass: organization
-description: Root entry for domain ${LDAP_DOMAIN}
+description: Root entry for domain {{.Env.Get "LDAP_DOMAIN" }}

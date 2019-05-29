@@ -2,25 +2,25 @@
 #
 version: 1
 
-dn: ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
+dn: ou=People,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 ou: People
 description: Root entry for persons
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
+dn: ou=Groups,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 ou: Groups
 description: Root entry for groups
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Special Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
+dn: ou=Special Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 ou: Special Users
 description: Root entry for Special Users
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Bind Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
+dn: ou=Bind Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 ou: Bind Users
 description: Root entry for Bind Users
 objectClass: top
