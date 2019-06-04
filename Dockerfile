@@ -4,12 +4,14 @@ LABEL NAME="official/ldap" \
       VERSION="2.4.47-1" \
       maintainer="christoph.wolfes@cloudogu.com"
 
+COPY ./resources /
 
 # INSTALL SOFTWARE
 RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
- && rm -rf /var/cache/apk/*
-
-COPY ./resources /
+ && rm -rf /var/cache/apk/* \
+ # ensure permissions of scripts
+ && chmod 755 startup.sh \
+ && chmod 755 srv/openldap/create-sa.sh
 
 # VOLUMES
 VOLUME ["/var/lib/ldap", "/etc/cesldap"]
