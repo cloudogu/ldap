@@ -1,6 +1,7 @@
 #!groovy
-@Library('github.com/cloudogu/ces-build-lib@5b32f71')
+@Library(['github.com/cloudogu/ces-build-lib@c622273', 'github.com/cloudogu/dogu-build-lib@1e5e2a6'])
 import com.cloudogu.ces.cesbuildlib.*
+import com.cloudogu.ces.dogubuildlib.*
 
 
 node('vagrant') {
@@ -21,6 +22,19 @@ node('vagrant') {
 
         stage('Lint') {
             lintDockerfile()
+        }
+
+        stage('Shellcheck'){
+           try{
+              def fileList = sh (script: 'find . -path ./.git -prune -o -type f -regex .*\\.sh -print', returnStdout: true);
+              fileList='"'+fileList.trim().replaceAll('\n','" "')+'"';
+
+              sh 'docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable '+fileList;
+              // new Docker(this).image('koalaman/shellcheck:stable').withRun('','-v "$PWD:/mnt"' +fileList,{}) always starts in detached mode (-d)
+
+           }catch(error){
+              throw error
+           }
         }
 
         try {
