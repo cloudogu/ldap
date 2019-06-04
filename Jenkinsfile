@@ -1,7 +1,7 @@
 #!groovy
-@Library(['github.com/cloudogu/dogu-build-lib@1e5e2a6', 'github.com/cloudogu/zalenium-build-lib@3092363']) _
+@Library('github.com/cloudogu/ces-build-lib@5b32f71')
+import com.cloudogu.ces.cesbuildlib.*
 
-import com.cloudogu.ces.dogubuildlib.*
 
 node('vagrant') {
 
@@ -36,6 +36,10 @@ node('vagrant') {
 
             stage('Build') {
                 ecoSystem.build("/dogu")
+            }
+
+            stage('Verify') {
+                ecoSystem.verify("/dogu")
             }
 
         } finally {
