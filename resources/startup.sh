@@ -74,7 +74,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # TODO remove from etcd ???
   CONFIG_PASSWORD=$(doguctl config -e "admin_password")
   ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
-  ADMIN_PASSWORD_ENC="$(slappasswd -s $ADMIN_PASSWORD)"
+  ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
   export ADMIN_PASSWORD_ENC
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
@@ -98,9 +98,13 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
   if [[ -d /srv/openldap/ldif.d ]]; then
-    for f in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-      doguctl template $f $(echo $f | sed 's/\.tpl//g')
+    # shellcheck disable=SC2044 fixed with line below
+    for file in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
+     [[ -e "$file" ]] || continue
+     # search for .tpl and replace it with empty
+     echo "${file//\.tpl/}";
     done
+
 
     slapd_exe=$(command -v slapd)
     echo >&2 "$0 ($slapd_exe): starting initdb daemon"
