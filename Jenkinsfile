@@ -1,9 +1,21 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@c622273', 'github.com/cloudogu/dogu-build-lib@1e5e2a6'])
+@Library(['github.com/cloudogu/ces-build-lib@c622273', 'github.com/cloudogu/dogu-build-lib@f8cca7c9b101ed0bcdde8df556c13711d4cfd5a5'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 
+node('docker'){
+        stage('Checkout') {
+            checkout scm
+        }
 
+        stage('Lint') {
+            lintDockerfile()
+        }
+
+        stage('Shellcheck'){
+           shellCheck()
+    }
+}
 node('vagrant') {
 
     timestamps{
@@ -16,26 +28,6 @@ node('vagrant') {
 
         EcoSystem ecoSystem = new EcoSystem(this, "gcloud-ces-operations-internal-packer", "jenkins-gcloud-ces-operations-internal")
 
-        stage('Checkout') {
-            checkout scm
-        }
-
-        stage('Lint') {
-            lintDockerfile()
-        }
-
-        stage('Shellcheck'){
-           try{
-              def fileList = sh (script: 'find . -path ./.git -prune -o -type f -regex .*\\.sh -print', returnStdout: true);
-              fileList='"'+fileList.trim().replaceAll('\n','" "')+'"';
-
-              sh 'docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable '+fileList;
-              // new Docker(this).image('koalaman/shellcheck:stable').withRun('','-v "$PWD:/mnt"' +fileList,{}) always starts in detached mode (-d)
-
-           }catch(error){
-              throw error
-           }
-        }
 
         try {
 
@@ -63,4 +55,6 @@ node('vagrant') {
         }
     }
 }
+
+
 
