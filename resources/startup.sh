@@ -97,8 +97,9 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
+   #shellcheck disable=SC2044
+   #fixed with filecheck below
   if [[ -d /srv/openldap/ldif.d ]]; then
-    # shellcheck disable=SC2044 fixed with line below
     for file in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
      [[ -e "$file" ]] || continue
      # search for .tpl and replace it with empty
