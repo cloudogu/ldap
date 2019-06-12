@@ -40,9 +40,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
   export LDAP_ROOTPASS_ENC
 
-  LDAP_BASE_DOMAIN=$(doguctl config --global domain)
   LDAP_DOMAIN=$(doguctl config --global domain)
-  export LDAP_BASE_DOMAIN
   export LDAP_DOMAIN
 
   echo "get admin user details"
