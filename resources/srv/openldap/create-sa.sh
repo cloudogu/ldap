@@ -32,9 +32,9 @@
     USERNAME="${SERVICE}_$(doguctl random -l 6)"
     export USERNAME
     PASSWORD=$(doguctl random)
-    ENC_PASSWORD=$(slappasswd -s ${PASSWORD})
+    ENC_PASSWORD=$(slappasswd -s "${PASSWORD}")
     export ENC_PASSWORD
-    doguctl template /srv/openldap/new-user.ldif.tpl /srv/openldap/new-user_${USERNAME}.ldif
+    doguctl template /srv/openldap/new-user.ldif.tpl /srv/openldap/new-user_"${USERNAME}".ldif
     ldapadd -f "/srv/openldap/new-user_${USERNAME}.ldif"
 
 } >/dev/null 2>&1

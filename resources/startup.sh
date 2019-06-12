@@ -104,7 +104,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
       doguctl template $f $(echo $f | sed 's/\.tpl//g')
     done
 
-    slapd_exe=$(which slapd)
+    slapd_exe=$(command -v slapd)
     echo >&2 "$0 ($slapd_exe): starting initdb daemon"
     slapd -u ldap -g ldap -h ldapi:///
 
@@ -142,4 +142,4 @@ fi
 # set stage for health check
 doguctl state ready
 
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d $LOGLEVEL
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"
