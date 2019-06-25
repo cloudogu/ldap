@@ -6,13 +6,13 @@
 dn: cn=config
 objectClass: olcGlobal
 cn: config
-olcConfigDir: ${OPENLDAP_CONFIG_DIR}
+olcConfigDir: {{.Env.Get "OPENLDAP_CONFIG_DIR" }}
 #
 # Where the pid file is put. The init.d script will not stop the server if you change this.
-olcPidFile: ${OPENLDAP_RUN_PIDFILE}
+olcPidFile: {{.Env.Get "OPENLDAP_RUN_PIDFILE" }}
 #
 # List of arguments that were passed to the server
-olcArgsFile: ${OPENLDAP_RUN_ARGSFILE}
+olcArgsFile: {{.Env.Get "OPENLDAP_RUN_ARGSFILE" }}
 #
 # Read slapd.conf(5) for possible values
 olcLogLevel: none
@@ -36,8 +36,8 @@ olcToolThreads: 1
 dn: cn=module{0},cn=config
 objectClass: olcModuleList
 cn: module{0}
-olcModulePath: ${OPENLDAP_MODULES_DIR}
-olcModuleLoad: {0}back_${OPENLDAP_BACKEND_DATABASE}
+olcModulePath: {{.Env.Get "OPENLDAP_MODULES_DIR" }}
+olcModuleLoad: {0}back_{{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
 
@@ -48,10 +48,10 @@ dn: cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: schema
 
-include: file://${OPENLDAP_ETC_DIR}/schema/core.ldif
-include: file://${OPENLDAP_ETC_DIR}/schema/cosine.ldif
-include: file://${OPENLDAP_ETC_DIR}/schema/nis.ldif
-include: file://${OPENLDAP_ETC_DIR}/schema/inetorgperson.ldif
+include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/core.ldif
+include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/cosine.ldif
+include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/nis.ldif
+include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/inetorgperson.ldif
 
 #
 # FRONTEND DATABASE
@@ -71,8 +71,8 @@ olcSizeLimit: 1000
 #		Allow authenticated users read access
 #		Allow anonymous users to authenticate
 #
-#olcAccess: to dn.base="" by * read
-#olcAccess: to dn.base="cn=Subschema" by * read
+#olcAccess: to dn.base= by * read
+#olcAccess: to dn.base=cn=Subschema by * read
 #olcAccess: to *
 #	by self write
 #	by users read
@@ -88,8 +88,8 @@ olcSizeLimit: 1000
 # Allow unlimited access to local connection from the local root user
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
 # Allow unauthenticated read access for schema and base DN autodiscovery
-olcAccess: {1}to dn.exact="" by * read
-olcAccess: {2}to dn.base="cn=Subschema" by * read
+olcAccess: {1}to dn.exact= by * read
+olcAccess: {2}to dn.base=cn=Subschema by * read
 
 #
 # CONFIG DATABASE
@@ -104,25 +104,25 @@ olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=a
 #
 # BACKENDS
 #
-dn: olcBackend=${OPENLDAP_BACKEND_DATABASE},cn=config
+dn: olcBackend={{.Env.Get "OPENLDAP_BACKEND_DATABASE" }},cn=config
 objectClass: olcBackendConfig
-olcBackend: ${OPENLDAP_BACKEND_DATABASE}
+olcBackend: {{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 
 # BACKEND DATABASE
-dn: olcDatabase=${OPENLDAP_BACKEND_DATABASE},cn=config
+dn: olcDatabase={{.Env.Get "OPENLDAP_BACKEND_DATABASE" }},cn=config
 objectClass: olcDatabaseConfig
-objectClass: ${OPENLDAP_BACKEND_OBJECTCLASS}
-olcDatabase: ${OPENLDAP_BACKEND_DATABASE}
+objectClass: {{.Env.Get "OPENLDAP_BACKEND_OBJECTCLASS" }}
+olcDatabase: {{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 olcDbCheckpoint: 512 30
 olcDbConfig: set_cachesize 0 2097152 0
 olcDbConfig: set_lk_max_objects 1500
 olcDbConfig: set_lk_max_locks 1500
 olcDbConfig: set_lk_max_lockers 1500
 olcLastMod: TRUE
-olcSuffix: ${OPENLDAP_SUFFIX}
-olcDbDirectory: ${OPENLDAP_BACKEND_DIR}
-olcRootDN: cn=admin,${OPENLDAP_SUFFIX}
-olcRootPW: ${LDAP_ROOTPASS_ENC}
+olcSuffix: {{.Env.Get "OPENLDAP_SUFFIX" }}
+olcDbDirectory: {{.Env.Get "OPENLDAP_BACKEND_DIR" }}
+olcRootDN: cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }}
+olcRootPW: {{.Env.Get "LDAP_ROOTPASS_ENC" }}
 olcDbIndex: objectClass eq
 olcDbIndex: cn pres,eq,approx,sub
 olcDbIndex: uid pres,eq,approx,sub
@@ -137,18 +137,18 @@ olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=a
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
-  by dn="cn=admin,${OPENLDAP_SUFFIX}" write
-  by dn.one=\"ou=Bind Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}\" read
-  by dn.one=\"ou=Special Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}\" write
-  by group/organizationalRole/roleOccupant="cn=admin,${OPENLDAP_SUFFIX}" write
+  by dn=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
+  by dn.one="ou=Bind Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" read
+  by dn.one="ou=Special Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" write
+  by group/organizationalRole/roleOccupant=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
   by * none
-olcAccess: to dn.base="" by * read
+olcAccess: to dn.base= by * read
 olcAccess: to *
   by self write
-  by dn="cn=admin,${OPENLDAP_SUFFIX}" write
-  by group/organizationalRole/roleOccupant="cn=admin,${OPENLDAP_SUFFIX}" write
-  by dn.one=\"ou=Bind Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}\" read
-  by dn.one=\"ou=Special Users,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}\" write
+  by dn=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
+  by group/organizationalRole/roleOccupant=cn=admin,{{.Env.Get "OPENLDAP_SUFFIX" }} write
+  by dn.one="ou=Bind Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" read
+  by dn.one="ou=Special Users,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}" write
   by * read
 
 # BACKEND MEMBEROF OVERLAY
