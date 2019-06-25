@@ -11,6 +11,35 @@ file:
     owner: root
     group: root
     filetype: file
+  /srv/openldap/ldif.d/000-domain.ldif:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: ["!{{.Env.Get \"OPENLDAP_SUFFIX\" }}"]
+  /srv/openldap/ldif.d/001-structure.ldif:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: ["!{{.Env.Get \"LDAP_DOMAIN\" }}"]
+  /srv/openldap/ldif.d/002-user.ldif:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: ["!{{.Env.Get \"LDAP_DOMAIN\" }}"]
+  /srv/openldap/ldif.d/003-group.ldif:
+    exists: true
+    mode: "0744"
+    owner: root
+    group: root
+    filetype: file
+    contains: ["!{{.Env.Get \"LDAP_DOMAIN\" }}"]
+
 
 package:
   openldap:

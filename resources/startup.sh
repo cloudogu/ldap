@@ -101,9 +101,10 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
    #fixed with filecheck below
   if [[ -d /srv/openldap/ldif.d ]]; then
     for file in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-     [[ -e "$file" ]] || continue
      # search for .tpl and replace it with empty
-     echo "${file//\.tpl/}";
+      if [[ -f "$file" ]]; then
+      doguctl template "$file" "${file//".tpl"/""}"
+      fi
     done
 
 
