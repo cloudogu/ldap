@@ -97,16 +97,14 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
-   #shellcheck disable=SC2044
-   #fixed with filecheck below
   if [[ -d /srv/openldap/ldif.d ]]; then
-    for file in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-     # search for .tpl and replace it with empty
-      if [[ -f "$file" ]]; then
+    shopt -s globstar nullglob
+    for file in /srv/openldap/ldif.d/*.tpl
+    do
+     # render template for all .tpl files and create files without .tpl ending
       doguctl template "$file" "${file//".tpl"/""}"
-      fi
     done
-
+    shopt -u globstar nullglob
 
     slapd_exe=$(command -v slapd)
     echo >&2 "$0 ($slapd_exe): starting initdb daemon"
