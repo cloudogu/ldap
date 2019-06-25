@@ -2,25 +2,23 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-
-source /etc/ces/functions.sh
-
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
-OPENLDAP_ETC_DIR="/etc/openldap"
+# variables which are used while rendering templates are exported
+export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
-OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
-OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
-OPENLDAP_MODULES_DIR="/usr/lib/openldap"
-OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
-OPENLDAP_BACKEND_DIR="/var/lib/openldap"
-OPENLDAP_BACKEND_DATABASE="hdb"
-OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
+export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
+export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
+export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
+export OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
+export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
+export OPENLDAP_BACKEND_DATABASE="hdb"
+export OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
 OPENLDAP_ULIMIT="2048"
 # proposal: use doguctl config openldap_suffix in future
-OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
@@ -38,47 +36,57 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "get domain and root password"
   # get domain and root password
   LDAP_ROOTPASS=$(doguctl random)
-  doguctl config -e rootpwd ${LDAP_ROOTPASS}
-  LDAP_ROOTPASS_ENC=$(slappasswd -s $LDAP_ROOTPASS)
-  LDAP_BASE_DOMAIN=$(doguctl config --global domain)
+  doguctl config -e rootpwd "${LDAP_ROOTPASS}"
+  LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
+  export LDAP_ROOTPASS_ENC
+
   LDAP_DOMAIN=$(doguctl config --global domain)
+  export LDAP_DOMAIN
 
   echo "get admin user details"
   CONFIG_USERNAME=$(doguctl config "admin_username")
   ADMIN_USERNAME=${CONFIG_USERNAME:-admin}
+  export ADMIN_USERNAME
 
   ADMIN_MAIL=$(doguctl config "admin_mail") ||  ADMIN_MAIL="${ADMIN_USERNAME}@${DOMAIN}"
+  export ADMIN_MAIL
 
   CONFIG_GIVENNAME=$(doguctl config "admin_givenname") || CONFIG_GIVENNAME="admin"
   ADMIN_GIVENNAME=${CONFIG_GIVENNAME:-CES}
+  export ADMIN_GIVENNAME
 
   CONFIG_SURNAME=$(doguctl config "admin_surname") || CONFIG_SURNAME="admin"
   ADMIN_SURNAME=${CONFIG_SURNAME:-Administrator}
+  export ADMIN_SURNAME
 
   CONFIG_DISPLAYNAME=$(doguctl config "admin_displayname") || CONFIG_DISPLAYNAME="admin"
   ADMIN_DISPLAYNAME=${CONFIG_DISPLAYNAME:-CES Administrator}
+  export ADMIN_DISPLAYNAME
 
   echo "get manager and admin group name"
   MANAGER_GROUP=$(doguctl config --global "manager_group") || MANAGER_GROUP="cesManager"
+  export MANAGER_GROUP
   ADMIN_GROUP=$(doguctl config --global admin_group) || ADMIN_GROUP="cesAdmin"
+  export ADMIN_GROUP
   ADMIN_MEMBER=$(doguctl config admin_member) || ADMIN_MEMBER="false"
 
   echo "get admin password"
   # TODO remove from etcd ???
   CONFIG_PASSWORD=$(doguctl config -e "admin_password")
   ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
-  ADMIN_PASSWORD_ENC="$(slappasswd -s $ADMIN_PASSWORD)"
+  ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
+  export ADMIN_PASSWORD_ENC
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
     echo "rendering ldap.conf template"
-    render_template /srv/openldap/conf.d/ldap.conf.tpl > ${OPENLDAP_ETC_DIR}/ldap.conf
+    doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
   fi
 
   if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
     echo "rendering slapd-config.ldif template"
-    render_template /srv/openldap/conf.d/slapd-config.ldif.tpl > ${OPENLDAP_ETC_DIR}/slapd-config.ldif
+    doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
   fi
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
@@ -86,13 +94,19 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
   chown -R ldap:ldap ${OPENLDAP_BACKEND_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR} ${OPENLDAP_BACKEND_DIR}
+  mkdir -p ${OPENLDAP_RUN_DIR}
+  chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
   if [[ -d /srv/openldap/ldif.d ]]; then
-    for f in $(find /srv/openldap/ldif.d -type f -name "*.tpl"); do
-      render_template $f > $(echo $f | sed 's/\.tpl//g')
+    shopt -s globstar nullglob
+    for file in /srv/openldap/ldif.d/*.tpl
+    do
+     # render template for all .tpl files and create files without .tpl ending
+      doguctl template "$file" "${file//".tpl"/""}"
     done
+    shopt -u globstar nullglob
 
-    slapd_exe=$(which slapd)
+    slapd_exe=$(command -v slapd)
     echo >&2 "$0 ($slapd_exe): starting initdb daemon"
     slapd -u ldap -g ldap -h ldapi:///
 
@@ -130,4 +144,4 @@ fi
 # set stage for health check
 doguctl state ready
 
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d $LOGLEVEL
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"
