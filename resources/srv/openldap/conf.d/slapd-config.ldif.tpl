@@ -40,6 +40,7 @@ olcModulePath: {{.Env.Get "OPENLDAP_MODULES_DIR" }}
 olcModuleLoad: {0}back_{{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
+olcModuleLoad: {3}unique
 
 #
 # SCHEMATA
