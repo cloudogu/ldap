@@ -18,12 +18,25 @@ function is_unique_module_imported(){
   echo "true"
 }
 
-function add_unique_module(){
+function make_email_unique(){
+  # Adding unique module
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
     dn: cn=module{0},cn=config
     changetype: modify
     add: olcModuleLoad
     olcModuleLoad: {3}unique
+EOS
+
+  # Adding unique filter
+  ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
+    # BACKEND UNIQUE OVERLAY
+    dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+    objectClass: olcUniqueConfig
+    objectClass: olcOverlayConfig
+    objectClass: olcConfig
+    objectClass: top
+    olcOverlay: {3}unique
+    olcUniqueURI: ldap:///?mail?sub
 EOS
 }
 
@@ -31,18 +44,20 @@ EOS
 
 echo "Running pre-upgrade script from Version ${FROM_VERSION}..."
 
-if [[ ${FROM_VERSION} =~ ^2.4.4((4-5)|(7-1)|(4-4))$ ]]; then
+if [[ ${FROM_VERSION} =~ ^2.4.4((4-.*)|(7-.*)|(4-.*))$ ]]; then
+  exit 0
   echo "Trying to import unique module..."
+  apk add --update openldap-overlay-unique
   IS_UNIQUE_IMPORTED=$(is_unique_module_imported)
   if [[ "${IS_UNIQUE_IMPORTED}" == "false" ]]; then
     echo "Adding unique module..."
-    add_refint_module
+    make_email_unique
   elif [[ "${IS_UNIQUE_IMPORTED}" == "true" ]]; then
     echo "Unique module is already imported."
-  fi
   else
     echo "Error while adding unique module."
     exit 1
+  fi
 fi
 
 doguctl config post_upgrade_running false

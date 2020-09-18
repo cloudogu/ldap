@@ -22,6 +22,43 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
+
+##### functions declaration
+
+function is_unique_module_imported(){
+  SEARCH_RESULT=$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" -LLL -Q "olcModuleLoad=unique")
+  if [ -z "${SEARCH_RESULT}" ]; then
+    echo "false"
+    return
+  fi
+  echo "true"
+}
+
+function make_email_unique(){
+  echo "Starting ldap..."
+
+  # Import unique module
+  ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
+  dn: cn=module{0},cn=config
+  changetype: modify
+  add: olcModuleLoad
+  olcModuleLoad: {3}unique
+EOS
+    # Adding unique filter
+  ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
+    # BACKEND UNIQUE OVERLAY
+    dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+    objectClass: olcUniqueConfig
+    objectClass: olcOverlayConfig
+    objectClass: olcConfig
+    objectClass: top
+    olcOverlay: {3}unique
+    olcUniqueURI: ldap:///?mail?sub
+EOS
+}
+
+######
+
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "initializing ldap"
@@ -141,7 +178,37 @@ EOF
   fi
 fi
 
+
+ADD_UNIQUE=$(doguctl config add_unique --default "false")
+if [[ "${ADD_UNIQUE}" == "true" ]]; then
+  echo "Trying to import unique module..."
+
+  echo "Starting ldap to update modules..."
+  /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap
+
+  echo "Wait until ldap is healthy..."
+  # TODO: Wait until healthy instead of sleep
+  sleep 30
+
+  IS_UNIQUE_IMPORTED=$(is_unique_module_imported)
+  if [[ "${IS_UNIQUE_IMPORTED}" == "false" ]]; then
+    echo "Adding unique module..."
+    make_email_unique
+  else
+    echo "Unique module is already imported."
+  fi
+
+  # TODO: Stop ldap properly
+  echo "Stopping ldap..."
+  pkill slapd
+
+  doguctl config --rm add_unique
+
+  echo "Unique module was added successful..."
+fi
+
 # set stage for health check
 doguctl state ready
 
+echo "Starting ldap..."
 /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

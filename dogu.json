@@ -29,8 +29,8 @@
       "Command": "/srv/openldap/create-sa.sh"
     },
     {
-      "Name": "pre-upgrade",
-      "Command": "/pre-upgrade.sh"
+      "Name": "post-upgrade",
+      "Command": "/post-upgrade.sh"
     }
   ],
   "HealthChecks": [
