@@ -7,7 +7,7 @@ LABEL NAME="official/ldap" \
 COPY ./resources /
 
 # INSTALL SOFTWARE
-RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
+RUN apk add --update openldap nano openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique\
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
