@@ -6,26 +6,40 @@
   "Url": "http://www.openldap.org",
   "Category": "Base",
   "Tags": [
-    "authentication", "ldap", "users", "groups"
+    "authentication",
+    "ldap",
+    "users",
+    "groups"
   ],
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
-  "Volumes": [{
-    "Name": "db",
-    "Path": "/var/lib/openldap",
-    "Owner": "102",
-    "Group": "102",
-    "NeedsBackup": true
-  }],
-  "ExposedCommands": [{
-    "Name": "service-account-create",
-    "Description": "Creates a new service account",
-    "Command": "/srv/openldap/create-sa.sh"
-  }],
-  "HealthChecks": [{
-  "Type": "tcp",
-  "Port": 389
-},{
-  "Type": "state"
-}]
+  "Volumes": [
+    {
+      "Name": "db",
+      "Path": "/var/lib/openldap",
+      "Owner": "102",
+      "Group": "102",
+      "NeedsBackup": true
+    }
+  ],
+  "ExposedCommands": [
+    {
+      "Name": "service-account-create",
+      "Description": "Creates a new service account",
+      "Command": "/srv/openldap/create-sa.sh"
+    },
+    {
+      "Name": "pre-upgrade",
+      "Command": "/pre-upgrade.sh"
+    }
+  ],
+  "HealthChecks": [
+    {
+      "Type": "tcp",
+      "Port": 389
+    },
+    {
+      "Type": "state"
+    }
+  ]
 }
