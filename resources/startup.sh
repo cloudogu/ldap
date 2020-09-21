@@ -57,6 +57,25 @@ EOS
 EOS
 }
 
+function wait_until_ldap_is_started() {
+  TIMEOUT=600
+  TIME=0
+  while true
+  do
+    STATUS="$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" >> /dev/null || echo "OFFLINE")"
+    if [[ "${STATUS}" != "OFFLINE" ]]; then
+      return
+    fi
+
+    sleep 1
+    TIME=$((TIME+1))
+    if [[ (${TIME} -ge ${TIMEOUT}) ]]; then
+      echo "Timeout while waiting for ldap start"
+      exit 1
+    fi
+  done
+}
+
 ######
 
 # LDAP ALREADY INITIALIZED?
@@ -187,8 +206,7 @@ if [[ "${ADD_UNIQUE}" == "true" ]]; then
   /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap
 
   echo "Wait until ldap is healthy..."
-  # TODO: Wait until healthy instead of sleep
-  sleep 30
+  wait_until_ldap_is_started
 
   IS_UNIQUE_IMPORTED=$(is_unique_module_imported)
   if [[ "${IS_UNIQUE_IMPORTED}" == "false" ]]; then
@@ -198,9 +216,8 @@ if [[ "${ADD_UNIQUE}" == "true" ]]; then
     echo "Unique module is already imported."
   fi
 
-  # TODO: Stop ldap properly
   echo "Stopping ldap..."
-  pkill slapd
+  kill -INT "$(cat /run/openldap/slapd.pid)"
 
   doguctl config --rm add_unique
 
