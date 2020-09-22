@@ -34,26 +34,37 @@ function is_unique_module_imported(){
   echo "true"
 }
 
-function make_email_unique(){
-  echo "Starting ldap..."
+function is_email_unique(){
+  SEARCH_RESULT=$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" -LLL -Q "olcUniqueURI=ldap:///?mail?sub")
+  if [ -z "${SEARCH_RESULT}" ]; then
+    echo "false"
+    return
+  fi
+  echo "true"
+}
 
+function add_unique_module(){
   # Import unique module
+  # Indentation is intended this way. Wouldn't work otherwise.
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
-  dn: cn=module{0},cn=config
-  changetype: modify
-  add: olcModuleLoad
-  olcModuleLoad: {3}unique
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: {3}unique
 EOS
-    # Adding unique filter
+}
+
+function make_email_unique(){
+  # Adding unique filter
+  # Indentation is intended this way. Wouldn't work otherwise.
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
-    # BACKEND UNIQUE OVERLAY
-    dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
-    objectClass: olcUniqueConfig
-    objectClass: olcOverlayConfig
-    objectClass: olcConfig
-    objectClass: top
-    olcOverlay: {3}unique
-    olcUniqueURI: ldap:///?mail?sub
+dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+objectClass: olcUniqueConfig
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+olcOverlay: {3}unique
+olcUniqueURI: ldap:///?mail?sub
 EOS
 }
 
@@ -211,9 +222,17 @@ if [[ "${ADD_UNIQUE}" == "true" ]]; then
   IS_UNIQUE_IMPORTED=$(is_unique_module_imported)
   if [[ "${IS_UNIQUE_IMPORTED}" == "false" ]]; then
     echo "Adding unique module..."
-    make_email_unique
+    add_unique_module
   else
     echo "Unique module is already imported."
+  fi
+
+  IS_EMAIL_UNIQUE=$(is_email_unique)
+  if [[ "${IS_EMAIL_UNIQUE}" == "false" ]]; then
+    echo "Making email unique..."
+    make_email_unique
+  else
+    echo "Email is already unique."
   fi
 
   echo "Stopping ldap..."
