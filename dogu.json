@@ -27,10 +27,6 @@
       "Name": "service-account-create",
       "Description": "Creates a new service account",
       "Command": "/srv/openldap/create-sa.sh"
-    },
-    {
-      "Name": "post-upgrade",
-      "Command": "/post-upgrade.sh"
     }
   ],
   "HealthChecks": [

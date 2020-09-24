@@ -174,3 +174,12 @@ olcRefintAttribute: manager
 olcRefintAttribute: uniqueMember
 olcRefintAttribute: member
 olcRefintAttribute: memberOf
+
+# BACKEND UNIQUE OVERLAY
+dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+objectClass: olcUniqueConfig
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+olcOverlay: {3}unique
+olcUniqueURI: ldap:///?mail?sub
