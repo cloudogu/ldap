@@ -22,71 +22,6 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
-
-##### functions declaration
-
-function is_unique_module_imported(){
-  SEARCH_RESULT=$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" -LLL -Q "olcModuleLoad=unique")
-  if [ -z "${SEARCH_RESULT}" ]; then
-    echo "false"
-    return
-  fi
-  echo "true"
-}
-
-function is_email_unique(){
-  SEARCH_RESULT=$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" -LLL -Q "olcUniqueURI=ldap:///?mail?sub")
-  if [ -z "${SEARCH_RESULT}" ]; then
-    echo "false"
-    return
-  fi
-  echo "true"
-}
-
-function add_unique_module(){
-  # Import unique module
-  # Indentation is intended this way. Wouldn't work otherwise.
-  ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
-dn: cn=module{0},cn=config
-changetype: modify
-add: olcModuleLoad
-olcModuleLoad: {3}unique
-EOS
-}
-
-function make_email_unique(){
-  # Adding unique filter
-  # Indentation is intended this way. Wouldn't work otherwise.
-  ldapadd -Y EXTERNAL -H ldapi:/// <<EOS
-dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
-objectClass: olcUniqueConfig
-objectClass: olcOverlayConfig
-objectClass: olcConfig
-objectClass: top
-olcOverlay: {3}unique
-olcUniqueURI: ldap:///?mail?sub
-EOS
-}
-
-function wait_until_ldap_is_started() {
-  TIMEOUT=600
-  TIME=0
-  while true
-  do
-    STATUS="$(ldapsearch -H ldapi:// -Y EXTERNAL -b "cn=config" >> /dev/null || echo "OFFLINE")"
-    if [[ "${STATUS}" != "OFFLINE" ]]; then
-      return
-    fi
-
-    sleep 1
-    TIME=$((TIME+1))
-    if [[ (${TIME} -ge ${TIMEOUT}) ]]; then
-      echo "Timeout while waiting for ldap start"
-      exit 1
-    fi
-  done
-}
-
 ######
 
 # LDAP ALREADY INITIALIZED?
@@ -206,41 +141,6 @@ EOF
       echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
     fi
   fi
-fi
-
-
-ADD_UNIQUE=$(doguctl config add_unique --default "false")
-if [[ "${ADD_UNIQUE}" == "true" ]]; then
-  echo "Trying to import unique module..."
-
-  echo "Starting ldap to update modules..."
-  /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap
-
-  echo "Wait until ldap is healthy..."
-  wait_until_ldap_is_started
-
-  IS_UNIQUE_IMPORTED=$(is_unique_module_imported)
-  if [[ "${IS_UNIQUE_IMPORTED}" == "false" ]]; then
-    echo "Adding unique module..."
-    add_unique_module
-  else
-    echo "Unique module is already imported."
-  fi
-
-  IS_EMAIL_UNIQUE=$(is_email_unique)
-  if [[ "${IS_EMAIL_UNIQUE}" == "false" ]]; then
-    echo "Making email unique..."
-    make_email_unique
-  else
-    echo "Email is already unique."
-  fi
-
-  echo "Stopping ldap..."
-  kill -INT "$(cat /run/openldap/slapd.pid)"
-
-  doguctl config --rm add_unique
-
-  echo "Unique module was added successful..."
 fi
 
 # set stage for health check
