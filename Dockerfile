@@ -21,5 +21,8 @@ VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 # LDAP PORT
 EXPOSE 389
 
+# healtcheck
+HEALTHCHECK CMD [ $(doguctl healthy ldap; echo $?) == 0 ]
+
 # FIRE IT UP
 CMD ["/startup.sh"]
