@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=ldap
-VERSION=1.3.0
+VERSION=2.4.47-1
 # overwrite ADDITIONAL_LDFLAGS to disable static compilation
 # this should fix https://github.com/golang/go/issues/13470
 ADDITIONAL_LDFLAGS=""
