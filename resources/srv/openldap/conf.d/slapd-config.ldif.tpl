@@ -40,6 +40,7 @@ olcModulePath: {{.Env.Get "OPENLDAP_MODULES_DIR" }}
 olcModuleLoad: {0}back_{{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
+olcModuleLoad: {3}unique
 
 #
 # SCHEMATA
@@ -173,3 +174,12 @@ olcRefintAttribute: manager
 olcRefintAttribute: uniqueMember
 olcRefintAttribute: member
 olcRefintAttribute: memberOf
+
+# BACKEND UNIQUE OVERLAY
+dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+objectClass: olcUniqueConfig
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+olcOverlay: {3}unique
+olcUniqueURI: ldap:///?mail?sub
