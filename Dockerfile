@@ -22,7 +22,7 @@ VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 EXPOSE 389
 
 # healtcheck
-HEALTHCHECK CMD [ $(doguctl healthy ldap; echo $?) == 0 ]
+HEALTHCHECK CMD doguctl healthy ldap || exit 1
 
 # FIRE IT UP
 CMD ["/startup.sh"]
