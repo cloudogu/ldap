@@ -22,6 +22,8 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
+######
+
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "initializing ldap"
@@ -144,4 +146,5 @@ fi
 # set stage for health check
 doguctl state ready
 
+echo "Starting ldap..."
 /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

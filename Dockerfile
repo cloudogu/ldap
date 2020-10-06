@@ -1,13 +1,15 @@
-FROM registry.cloudogu.com/official/base:3.9.4-1
+FROM registry.cloudogu.com/official/base:3.11.6-2
 
 LABEL NAME="official/ldap" \
-      VERSION="2.4.47-1" \
+      VERSION="2.4.48-1" \
       maintainer="christoph.wolfes@cloudogu.com"
+
+ENV LDAP_VERSION="2.4.48-r2"
 
 COPY ./resources /
 
 # INSTALL SOFTWARE
-RUN apk add --update openldap openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint \
+RUN apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique\
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
@@ -18,6 +20,9 @@ VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 
 # LDAP PORT
 EXPOSE 389
+
+# healtcheck
+HEALTHCHECK CMD doguctl healthy ldap || exit 1
 
 # FIRE IT UP
 CMD ["/startup.sh"]
