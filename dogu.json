@@ -27,6 +27,11 @@
       "Name": "service-account-create",
       "Description": "Creates a new service account",
       "Command": "/srv/openldap/create-sa.sh"
+    },
+    {
+      "Name": "service-account-remove",
+      "Description": "Removes a service account",
+      "Command": "/srv/openldap/remove-sa.sh"
     }
   ],
   "HealthChecks": [
