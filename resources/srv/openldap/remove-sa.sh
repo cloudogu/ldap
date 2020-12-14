@@ -11,7 +11,7 @@ if [ X"${SERVICE}" = X"" ]; then
 fi
 
 if [ X"${SERVICE}" = X"" ]; then
-    echo "usage create-sa.sh servicename"
+    echo "usage remove-sa.sh servicename"
     exit 1
 fi
 
