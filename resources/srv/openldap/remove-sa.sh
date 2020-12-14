@@ -34,7 +34,7 @@ do
   export USERNAME="${result}"
   doguctl template /srv/openldap/remove-user.ldif.tpl /srv/openldap/remove-user_"${USERNAME}".ldif
   FILE="/srv/openldap/remove-user_${USERNAME}.ldif"
-  echo "Removing ldap user '${USERNAME}'"
+  echo "Removing ldap service account '${USERNAME}'"
   ldapmodify -f "${FILE}"
   echo "Removing temporary file '${FILE}'"
   rm "${FILE}"
