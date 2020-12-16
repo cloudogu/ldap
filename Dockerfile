@@ -4,7 +4,7 @@ LABEL NAME="official/ldap" \
       VERSION="2.4.48-1" \
       maintainer="christoph.wolfes@cloudogu.com"
 
-ENV LDAP_VERSION="2.4.48-r2"
+ENV LDAP_VERSION="2.4.48-r3"
 
 COPY ./resources /
 

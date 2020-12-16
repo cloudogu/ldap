@@ -13,6 +13,24 @@
   ],
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
+  "Configuration": [
+    {
+      "Name": "container_config/memory_limit",
+      "Description":"Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte)",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/swap_limit",
+      "Description":"Limits the container's swap memory usage. Use zero or a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte). 0 will disable swapping.",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    }
+  ],
   "Volumes": [
     {
       "Name": "db",
@@ -27,6 +45,11 @@
       "Name": "service-account-create",
       "Description": "Creates a new service account",
       "Command": "/srv/openldap/create-sa.sh"
+    },
+    {
+      "Name": "service-account-remove",
+      "Description": "Removes a service account",
+      "Command": "/srv/openldap/remove-sa.sh"
     }
   ],
   "HealthChecks": [
