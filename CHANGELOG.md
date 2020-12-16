@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.4.48-2] - 2020-12-16
+### Added
+- command to remove service accounts
+
 ## [v2.4.48-1] - 2020-10-06
 ### Changed
 - upgrade to OpenLDAP 2.4.48
