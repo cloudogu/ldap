@@ -21,9 +21,6 @@ if [ X"${TYPE}" = X"rw" ]; then
 fi
 export OU
 
-LDAP_DOMAIN=$(doguctl config --global domain)
-export LDAP_DOMAIN
-
 OPENLDAP_SUFFIX=$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")
 
 for result in $(ldapsearch -x -b "${OPENLDAP_SUFFIX}" "(cn=${SERVICE}*)" |grep -o "^cn:[ ]${SERVICE}[_].\{6\}$" |sed 's/cn:[ ]//g')
