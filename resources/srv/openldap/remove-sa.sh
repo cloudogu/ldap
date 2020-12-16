@@ -23,13 +23,10 @@ export OU
 
 LDAP_DOMAIN=$(doguctl config --global domain)
 export LDAP_DOMAIN
-# proposal: use doguctl config openldap_suffix in future
-OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-export OPENLDAP_SUFFIX
 
 OPENLDAP_SUFFIX=$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")
 
-for result in $(ldapsearch -x -b "${OPENLDAP_SUFFIX}" "(cn=${SERVICE}*)" |grep '^cn' |grep -o "^cn:[ ]${SERVICE}[_].\{6\}$" |sed 's/cn:[ ]//g')
+for result in $(ldapsearch -x -b "${OPENLDAP_SUFFIX}" "(cn=${SERVICE}*)" |grep -o "^cn:[ ]${SERVICE}[_].\{6\}$" |sed 's/cn:[ ]//g')
 do
   export USERNAME="${result}"
   doguctl template /srv/openldap/remove-user.ldif.tpl /srv/openldap/remove-user_"${USERNAME}".ldif
