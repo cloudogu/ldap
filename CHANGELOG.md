@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.4.48-3] - 2020-12-18
+### Fixed
+- missing template information for the remove service accounts command
+
 ## [v2.4.48-2] - 2020-12-16
 ### Added
 - command to remove service accounts
