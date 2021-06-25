@@ -1,7 +1,7 @@
 <img src="https://cloudogu.com/images/dogus/openldap.png" alt="openldap logo" height="100px">
 
 
-[![GitHub license](https://img.shields.io/github/license/cloudogu/ldap.svg)](https://github.com/cloudogu/ldap/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/cloudogu/ldap.svg)](https://github.com/cloudogu/ldap/blob/develop/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/cloudogu/ldap.svg)](https://github.com/cloudogu/ldap/releases)
 
 # LDAP Dogu
