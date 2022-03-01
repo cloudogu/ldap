@@ -38,6 +38,11 @@
       "Owner": "102",
       "Group": "102",
       "NeedsBackup": true
+    },
+    {
+      "Name": "config",
+      "Path": "/etc/openldap/slapd.d",
+      "NeedsBackup": true
     }
   ],
   "ExposedCommands": [

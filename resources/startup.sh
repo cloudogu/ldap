@@ -143,6 +143,12 @@ EOF
   fi
 fi
 
+mkdir -p ${OPENLDAP_BACKEND_DIR}/run
+mkdir -p ${OPENLDAP_RUN_DIR}
+chown -R ldap:ldap ${OPENLDAP_BACKEND_DIR}
+chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR} ${OPENLDAP_BACKEND_DIR}
+chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+
 # set stage for health check
 doguctl state ready
 

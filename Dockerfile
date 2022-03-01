@@ -16,7 +16,7 @@ RUN apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb
  && chmod 755 srv/openldap/create-sa.sh
 
 # VOLUMES
-VOLUME ["/var/lib/ldap", "/etc/cesldap"]
+VOLUME ["/var/lib/ldap", "/etc/cesldap", "/etc/openldap"]
 
 # LDAP PORT
 EXPOSE 389
