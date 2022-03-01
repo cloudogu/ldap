@@ -24,6 +24,11 @@ ulimit -n ${OPENLDAP_ULIMIT}
 
 ######
 
+if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
+  mkdir -p ${OPENLDAP_RUN_DIR}
+fi
+chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "initializing ldap"
@@ -46,36 +51,33 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   export LDAP_DOMAIN
 
   echo "get admin user details"
-  CONFIG_USERNAME=$(doguctl config "admin_username")
-  ADMIN_USERNAME=${CONFIG_USERNAME:-admin}
+  ADMIN_USERNAME=$(doguctl config -d admin admin_username)
   export ADMIN_USERNAME
 
-  ADMIN_MAIL=$(doguctl config "admin_mail") ||  ADMIN_MAIL="${ADMIN_USERNAME}@${DOMAIN}"
-  export ADMIN_MAIL
+  echo "get manager and admin group name"
+  MANAGER_GROUP=$(doguctl config --global -d cesManager manager_group)
+  export MANAGER_GROUP
 
-  CONFIG_GIVENNAME=$(doguctl config "admin_givenname") || CONFIG_GIVENNAME="admin"
-  ADMIN_GIVENNAME=${CONFIG_GIVENNAME:-CES}
+  ADMIN_GROUP=$(doguctl config --global -d cesAdmin admin_group)
+  export ADMIN_GROUP
+
+  ADMIN_MEMBER=$(doguctl config -d false admin_member)
+
+  ADMIN_GIVENNAME=$(doguctl config -d admin admin_givenname)
   export ADMIN_GIVENNAME
 
-  CONFIG_SURNAME=$(doguctl config "admin_surname") || CONFIG_SURNAME="admin"
-  ADMIN_SURNAME=${CONFIG_SURNAME:-Administrator}
+  ADMIN_SURNAME=$(doguctl config -d admin admin_surname)
   export ADMIN_SURNAME
 
-  CONFIG_DISPLAYNAME=$(doguctl config "admin_displayname") || CONFIG_DISPLAYNAME="admin"
-  ADMIN_DISPLAYNAME=${CONFIG_DISPLAYNAME:-CES Administrator}
+  ADMIN_DISPLAYNAME=$(doguctl config -d admin admin_displayname)
   export ADMIN_DISPLAYNAME
 
-  echo "get manager and admin group name"
-  MANAGER_GROUP=$(doguctl config --global "manager_group") || MANAGER_GROUP="cesManager"
-  export MANAGER_GROUP
-  ADMIN_GROUP=$(doguctl config --global admin_group) || ADMIN_GROUP="cesAdmin"
-  export ADMIN_GROUP
-  ADMIN_MEMBER=$(doguctl config admin_member) || ADMIN_MEMBER="false"
+  ADMIN_MAIL=$(doguctl config admin_mail)
+  export ADMIN_MAIL
 
   echo "get admin password"
   # TODO remove from etcd ???
-  CONFIG_PASSWORD=$(doguctl config -e "admin_password")
-  ADMIN_PASSWORD=${CONFIG_PASSWORD:-admin}
+  ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
   ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
   export ADMIN_PASSWORD_ENC
 
@@ -92,62 +94,54 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   fi
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
+  # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
+  chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
-  chown -R ldap:ldap ${OPENLDAP_BACKEND_DIR}
-  chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR} ${OPENLDAP_BACKEND_DIR}
-  mkdir -p ${OPENLDAP_RUN_DIR}
-  chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
-  if [[ -d /srv/openldap/ldif.d ]]; then
-    shopt -s globstar nullglob
-    for file in /srv/openldap/ldif.d/*.tpl
-    do
-     # render template for all .tpl files and create files without .tpl ending
-      doguctl template "$file" "${file//".tpl"/""}"
-    done
-    shopt -u globstar nullglob
+  shopt -s globstar nullglob
+  for file in /srv/openldap/ldif.d/*.tpl
+  do
+   # render template for all .tpl files and create files without .tpl ending
+    doguctl template "$file" "${file//".tpl"/""}"
+  done
+  shopt -u globstar nullglob
 
-    slapd_exe=$(command -v slapd)
-    echo >&2 "$0 ($slapd_exe): starting initdb daemon"
-    slapd -u ldap -g ldap -h ldapi:///
+  slapd_exe=$(command -v slapd)
+  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-    for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
-      echo >&2 "applying $f"
-      ldapadd -Y EXTERNAL -f "$f" 2>&1
-    done
-    # if ADMIN_MEMBER is true add admin to member group for tool admin rights
-    if [[ ${ADMIN_MEMBER} = "true" ]]; then
-      ldapmodify -Y EXTERNAL << EOF
+  slapd -u ldap -g ldap -h ldapi:///
+
+  for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
+    echo >&2 "applying $f"
+    ldapadd -Y EXTERNAL -f "$f" 2>&1
+  done
+  # if ADMIN_MEMBER is true add admin to member group for tool admin rights
+  if [[ ${ADMIN_MEMBER} = "true" ]]; then
+    ldapmodify -Y EXTERNAL << EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
 member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 EOF
-    fi
-    if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-      echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
-      exit 1
-    else
-      slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
-      echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
-      kill -s INT "$slapd_pid" || true
-      while : ; do
-        [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
-        sleep 1
-        echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
-      done
-      echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
-    fi
   fi
-fi
+  if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
+    echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
+    exit 1
+  else
+    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+    echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
+    kill -s INT "$slapd_pid" || true
+    while : ; do
+      [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
+      sleep 1
+      echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
+    done
+    echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
+  fi
 
-mkdir -p ${OPENLDAP_BACKEND_DIR}/run
-mkdir -p ${OPENLDAP_RUN_DIR}
-chown -R ldap:ldap ${OPENLDAP_BACKEND_DIR}
-chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR} ${OPENLDAP_BACKEND_DIR}
-chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+fi
 
 # set stage for health check
 doguctl state ready
