@@ -35,8 +35,15 @@
     {
       "Name": "db",
       "Path": "/var/lib/openldap",
-      "Owner": "102",
-      "Group": "102",
+      "Owner": "100",
+      "Group": "101",
+      "NeedsBackup": true
+    },
+    {
+      "Name": "config",
+      "Path": "/etc/openldap/slapd.d",
+      "Owner": "100",
+      "Group": "101",
       "NeedsBackup": true
     }
   ],

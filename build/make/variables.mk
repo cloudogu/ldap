@@ -17,6 +17,7 @@ GO_CALL=${GO_ENVIRONMENT} go
 PACKAGES=$(shell ${GO_CALL} list ./... | grep -v /vendor/)
 PACKAGES_FOR_INTEGRATION_TEST?=${PACKAGES}
 GO_BUILD_TAG_INTEGRATION_TEST?=integration
+GOMODULES=on
 
 SRC:=$(shell find "${WORKDIR}" -type f -name "*.go" -not -path "./vendor/*")
 
@@ -35,11 +36,13 @@ endif
 
 YARN_TARGET=$(WORKDIR)/node_modules
 BOWER_TARGET?=$(WORKDIR)/public/vendor
+NODE_VERSION?=8
 
 UID_NR:=$(shell id -u)
 GID_NR:=$(shell id -g)
 HOME_DIR=$(TMP_DIR)/home
 PASSWD=$(TMP_DIR)/passwd
+ETCGROUP=$(TMP_DIR)/group
 
 $(TMP_DIR):
 	@mkdir -p $(TMP_DIR)
@@ -52,3 +55,7 @@ $(TARGET_DIR):
 
 $(PASSWD): $(TMP_DIR)
 	@echo "$(USER):x:$(UID_NR):$(GID_NR):$(USER):/home/$(USER):/bin/bash" > $(PASSWD)
+
+$(ETCGROUP): $(TMP_DIR)
+	@echo "root:x:0:" > $(ETCGROUP)
+	@echo "$(USER):x:$(GID_NR):" >> $(ETCGROUP)

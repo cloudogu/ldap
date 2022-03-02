@@ -11,35 +11,18 @@ file:
     owner: root
     group: root
     filetype: file
-  /srv/openldap/ldif.d/000-domain.ldif:
+  /etc/openldap/slapd.d/cn=config:
+    exists: true
+    mode: "0750"
+    owner: ldap
+    group: ldap
+    filetype: directory
+  /var/lib/openldap/DB_CONFIG:
     exists: true
     mode: "0644"
-    owner: root
-    group: root
+    owner: ldap
+    group: ldap
     filetype: file
-    contains: ["!OPENLDAP_SUFFIX"]
-  /srv/openldap/ldif.d/001-structure.ldif:
-    exists: true
-    mode: "0644"
-    owner: root
-    group: root
-    filetype: file
-    contains: ["!LDAP_DOMAIN"]
-  /srv/openldap/ldif.d/002-user.ldif:
-    exists: true
-    mode: "0644"
-    owner: root
-    group: root
-    filetype: file
-    contains: ["!LDAP_DOMAIN"]
-  /srv/openldap/ldif.d/003-group.ldif:
-    exists: true
-    mode: "0644"
-    owner: root
-    group: root
-    filetype: file
-    contains: ["!LDAP_DOMAIN"]
-
 
 package:
   openldap:

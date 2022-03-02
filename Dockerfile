@@ -2,7 +2,7 @@ FROM registry.cloudogu.com/official/base:3.11.6-2
 
 LABEL NAME="official/ldap" \
       VERSION="2.4.48-3" \
-      maintainer="christoph.wolfes@cloudogu.com"
+      maintainer="hello@cloudogu.com"
 
 ENV LDAP_VERSION="2.4.48-r3"
 
@@ -14,9 +14,6 @@ RUN apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb
  # ensure permissions of scripts
  && chmod 755 startup.sh \
  && chmod 755 srv/openldap/create-sa.sh
-
-# VOLUMES
-VOLUME ["/var/lib/ldap", "/etc/cesldap"]
 
 # LDAP PORT
 EXPOSE 389
