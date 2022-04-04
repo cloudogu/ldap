@@ -129,6 +129,7 @@ member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 EOF
   fi
+
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
