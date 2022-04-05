@@ -20,8 +20,8 @@ file:
   /var/lib/openldap/DB_CONFIG:
     exists: true
     mode: "0644"
-    owner: ldap
-    group: ldap
+    owner: root
+    group: root
     filetype: file
 
 package:
