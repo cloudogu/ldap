@@ -29,26 +29,39 @@ if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
 fi
 chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
+# Generate ldap.conf and slapd-config.ldif.
+# This has to be done at every dogu start. Otherwise service account operations will fail
+# because ldapadd uses the default configuration which are not compatible with the backend
+echo "removing old config files"
+# remove default configuration
+rm -f ${OPENLDAP_ETC_DIR}/*.conf
+
+echo "get domain and root password"
+# get domain and root password
+LDAP_ROOTPASS=$(doguctl random)
+LDAP_CONFIG_PASS=$(doguctl config -e -d "${LDAP_ROOTPASS}" rootpwd)
+LDAP_ROOTPASS_ENC=$(slappasswd -s "${LDAP_CONFIG_PASS}")
+export LDAP_ROOTPASS_ENC
+
+LDAP_DOMAIN=$(doguctl config --global domain)
+export LDAP_DOMAIN
+
+if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
+  echo "rendering ldap.conf template"
+  doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
+fi
+
+if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
+  echo "rendering slapd-config.ldif template"
+  doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
+fi
+
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   echo "initializing ldap"
 
   # set stage for health check
   doguctl state installing
-
-  echo "removing old config files"
-  # remove default configuration
-  rm -f ${OPENLDAP_ETC_DIR}/*.conf
-
-  echo "get domain and root password"
-  # get domain and root password
-  LDAP_ROOTPASS=$(doguctl random)
-  doguctl config -e rootpwd "${LDAP_ROOTPASS}"
-  LDAP_ROOTPASS_ENC=$(slappasswd -s "$LDAP_ROOTPASS")
-  export LDAP_ROOTPASS_ENC
-
-  LDAP_DOMAIN=$(doguctl config --global domain)
-  export LDAP_DOMAIN
 
   echo "get admin user details"
   ADMIN_USERNAME=$(doguctl config -d admin admin_username)
@@ -82,16 +95,6 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   export ADMIN_PASSWORD_ENC
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
-
-  if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
-    echo "rendering ldap.conf template"
-    doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
-  fi
-
-  if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
-    echo "rendering slapd-config.ldif template"
-    doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
-  fi
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
@@ -140,7 +143,6 @@ EOF
     done
     echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
   fi
-
 fi
 
 # set stage for health check
