@@ -15,7 +15,7 @@ function installPwdPolicy() {
 
   # start installation and configuration of password policy
   echo "include password policy schema"
-  ldapadd -Y EXTERNAL -H ldapi:/// -f ${OPENLDAP_ETC_DIR}/schema/ppolicy.ldif
+  ldapadd -Y EXTERNAL -H ldapi:/// -f "${OPENLDAP_ETC_DIR}"/schema/ppolicy.ldif
 
   echo "install password policy module"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
@@ -61,7 +61,7 @@ EOF
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
   else
-    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+    slapd_pid=$(cat "${OPENLDAP_RUN_PIDFILE}")
     echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
     kill -s INT "$slapd_pid" || true
     while : ; do
