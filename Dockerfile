@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/base:3.14.3-1
 
 LABEL NAME="official/ldap" \
-      VERSION="2.4.48-4" \
+      VERSION="2.4.58-1" \
       maintainer="hello@cloudogu.com"
 
 ENV LDAP_VERSION="2.4.58-r0"
