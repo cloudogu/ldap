@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- a default password policy (#14)
+  - This password policy is kept minimalistic. Only the setting of a flag for a mandatory resetting of the password is configured.
+  - By setting the attribute `PwdReset` to `true` for a user, he/she must change his/her password when logging in.
 
 ## [v2.4.58-1] - 2022-04-06
 ### Fixed
