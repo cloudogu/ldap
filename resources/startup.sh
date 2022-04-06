@@ -4,6 +4,9 @@ set -o nounset
 set -o pipefail
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
+# shellcheck disable=SC1091
+source install-pwd-policy.sh
+
 LOGLEVEL=${LOGLEVEL:-0}
 
 # variables which are used while rendering templates are exported
@@ -144,6 +147,15 @@ EOF
     done
     echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
   fi
+fi
+
+# Is password schema already included?
+PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
+if [[ ! -f "$PASSWORD_SCHEMA_FILE" ]]; then
+  echo "installing password policy"
+  installPwdPolicy
+else
+  echo "password policy is already installed; nothing to do here"
 fi
 
 # set stage for health check

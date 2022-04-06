@@ -4,21 +4,20 @@ set -o nounset
 set -o pipefail
 
 function installPwdPolicy() {
- ## Quelle: https://kifarunix.com/implement-openldap-password-policies/
-
-  OPENLDAP_RUN_DIR="/var/run/openldap"
-  export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
-  export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
-
   # set stage for health check
   doguctl state installing
 
+  # start slapd; since LDAP has not yet been started, slapd must be started explicitly in order to make changes
+  # and additions.
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
-
   slapd -u ldap -g ldap -h ldapi:///
 
-  echo "Install password policy module"
+  # start installation and configuration of password policy
+  echo "include password policy schema"
+  ldapadd -Y EXTERNAL -H ldapi:/// -f ${OPENLDAP_ETC_DIR}/schema/ppolicy.ldif
+
+  echo "install password policy module"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: cn=module{0},cn=config
 changetype: modify
@@ -26,7 +25,7 @@ add: olcModuleLoad
 olcModuleLoad: ppolicy
 EOF
 
-  echo "Add policies OU hinzufügen"
+  echo "add organizational unit (ou) for policies"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: organizationalUnit
@@ -34,12 +33,7 @@ objectClass: top
 ou: Policies
 EOF
 
-  echo "Include password policy schema"
-  # 3) PW-Schema inkludieren (muss im Schema-Ordner () ausgeführt werden
-  ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/ppolicy.ldif
-
-  echo "Add password policy overlay"
-  ## 4) Password-Policy-Overlay hinzufügen
+  echo "add password policy overlay"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
 objectClass: olcOverlayConfig
@@ -49,18 +43,20 @@ olcPPolicyDefault: cn=default,ou=Policies,dc=cloudogu,dc=com
 olcPPolicyHashCleartext: TRUE
 EOF
 
-  echo "Add default password policy"
-  ## 5) Eine konkrete Password-Policy hinzufügen
+  echo "add default password policy"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: cn=default,ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: person
 objectClass: pwdPolicy
-cn: pwpolicy
+cn: default
 sn: pwpolicy
 pwdAttribute: userPassword
 pwdMustChange: TRUE
 EOF
 
+  echo "Installation and configuriation of password policy finished"
+
+  # stop slapd again
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
