@@ -1,15 +1,20 @@
-FROM registry.cloudogu.com/official/base:3.11.6-2
+FROM registry.cloudogu.com/official/base:3.14.3-1
 
 LABEL NAME="official/ldap" \
       VERSION="2.4.48-4" \
       maintainer="hello@cloudogu.com"
 
-ENV LDAP_VERSION="2.4.48-r3"
+ENV LDAP_VERSION="2.4.58-r0"
 
 COPY ./resources /
 
 # INSTALL SOFTWARE
-RUN apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique\
+RUN set -o errexit \
+ && set -o nounset \
+ && set -o pipefail \
+ && apk update \
+ && apk upgrade \
+ && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
