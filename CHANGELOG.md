@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.4.58-1] - 2022-04-06
+### Fixed
+- fix service account creation and deletion with the generation of ldap and slapd config at every dogu start #17
+
+### Changed
+- Upgrade to ldap 2.4.58
+- Upgrade base image to 3.14.3-1
+- Upgrade zlib to fix CVE-2018-25032; #15
+
 ## [v2.4.48-4] - 2022-03-02
 ### Added
 - volume `/etc/openldap/slapd.d` to store slapd configuration data (#4)
