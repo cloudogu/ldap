@@ -101,7 +101,8 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   ADMIN_DISPLAYNAME=$(doguctl config -d admin admin_displayname)
   export ADMIN_DISPLAYNAME
 
-  ADMIN_MAIL=$(doguctl config admin_mail)
+  DEFAULT_ADMIN_MAIL="${ADMIN_USERNAME}@${LDAP_DOMAIN}"
+  ADMIN_MAIL=$(doguctl config -d "${DEFAULT_ADMIN_MAIL}" admin_mail)
   export ADMIN_MAIL
 
   echo "get admin password"
