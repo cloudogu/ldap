@@ -40,7 +40,7 @@ dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy
-olcPPolicyDefault: cn=default,ou=Policies,dc=cloudogu,dc=com
+olcPPolicyDefault: cn=default,ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 olcPPolicyHashCleartext: TRUE
 EOF
 

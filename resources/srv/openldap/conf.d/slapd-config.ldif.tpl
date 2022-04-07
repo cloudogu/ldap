@@ -192,5 +192,5 @@ objectClass: olcConfig
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: {4}ppolicy
-olcPPolicyDefault: cn=default,ou=Policies,dc=cloudogu,dc=com
+olcPPolicyDefault: cn=default,ou=Policies,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 olcPPolicyHashCleartext: TRUE
