@@ -30,6 +30,7 @@ EOF
 dn: ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: organizationalUnit
 objectClass: top
+description: Root entry for policies
 ou: Policies
 EOF
 
