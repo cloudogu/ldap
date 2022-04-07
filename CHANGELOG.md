@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - a default password policy (#14)
-  - This password policy is kept minimalistic. Only the setting of a flag for a mandatory resetting of the password is configured.
+  - This password policy is kept minimalistic. Only the setting of a flag for a mandatory resetting of the password is 
+    configured.
   - By setting the attribute `PwdReset` to `true` for a user, he/she must change his/her password when logging in.
+  - For detailed information on the password policy, see [password policy documentation](docs/operations/password-policy_en.md)
 
 ## [v2.4.58-1] - 2022-04-06
 ### Fixed
