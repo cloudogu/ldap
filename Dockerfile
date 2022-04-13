@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/base:3.14.3-1
 
 LABEL NAME="official/ldap" \
-      VERSION="2.4.58-1" \
+      VERSION="2.4.58-2" \
       maintainer="hello@cloudogu.com"
 
 ENV LDAP_VERSION="2.4.58-r0"
@@ -14,7 +14,7 @@ RUN set -o errexit \
  && set -o pipefail \
  && apk update \
  && apk upgrade \
- && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
+ && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy\
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
