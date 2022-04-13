@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- a default password policy (#14)
+  - This password policy is kept minimalistic. Only the setting of a flag for a mandatory resetting of the password is 
+    configured.
+  - By setting the attribute `PwdReset` to `true` for a user, he/she must change his/her password when logging in.
+  - For detailed information on the password policy, see [password policy documentation](docs/operations/password-policy_en.md)
+
+### Fixed
+- During the first installation or during an installation after a `purge`, the Dogu did not start if no value is stored 
+  for the admin user in the etcd (key `/config/ldap/admin_mail/`). (#19)
 
 ## [v2.4.58-1] - 2022-04-06
 ### Fixed

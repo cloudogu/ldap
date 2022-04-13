@@ -2,7 +2,23 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+
+echo "                                     ./////,                    "
+echo "                                 ./////==//////*                "
+echo "                                ////.  ___   ////.              "
+echo "                         ,**,. ////  ,////A,  */// ,**,.        "
+echo "                    ,/////////////*  */////*  *////////////A    "
+echo "                   ////'        \VA.   '|'   .///'       '///*  "
+echo "                  *///  .*///*,         |         .*//*,   ///* "
+echo "                  (///  (//////)**--_./////_----*//////)   ///) "
+echo "                   V///   '°°°°      (/////)      °°°°'   ////  "
+echo "                    V/////(////////\. '°°°' ./////////(///(/'   "
+echo "                       'V/(/////////////////////////////V'      "
+
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
+
+# shellcheck disable=SC1091
+source install-pwd-policy.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
@@ -85,7 +101,8 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   ADMIN_DISPLAYNAME=$(doguctl config -d admin admin_displayname)
   export ADMIN_DISPLAYNAME
 
-  ADMIN_MAIL=$(doguctl config admin_mail)
+  DEFAULT_ADMIN_MAIL="${ADMIN_USERNAME}@${LDAP_DOMAIN}"
+  ADMIN_MAIL=$(doguctl config -d "${DEFAULT_ADMIN_MAIL}" admin_mail)
   export ADMIN_MAIL
 
   echo "get admin password"
@@ -129,6 +146,7 @@ member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 EOF
   fi
+
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
@@ -143,6 +161,15 @@ EOF
     done
     echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
   fi
+fi
+
+# Is password schema already included?
+PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
+if [[ ! -f "$PASSWORD_SCHEMA_FILE" ]]; then
+  echo "installing password policy"
+  installPwdPolicy
+else
+  echo "password policy is already installed; nothing to do here"
 fi
 
 # set stage for health check

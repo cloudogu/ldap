@@ -41,6 +41,7 @@ olcModuleLoad: {0}back_{{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
 olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
 olcModuleLoad: {3}unique
+olcModuleLoad: {4}ppolicy
 
 #
 # SCHEMATA
@@ -53,6 +54,7 @@ include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/core.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/cosine.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/nis.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/inetorgperson.ldif
+include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/ppolicy.ldif
 
 #
 # FRONTEND DATABASE
@@ -183,3 +185,12 @@ objectClass: olcConfig
 objectClass: top
 olcOverlay: {3}unique
 olcUniqueURI: ldap:///?mail?sub
+
+# BACKEND PPOLICY OVERLAY
+dn: olcOverlay={4}ppolicy,olcDatabase={1}hdb,cn=config
+objectClass: olcConfig
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: {4}ppolicy
+olcPPolicyDefault: cn=default,ou=Policies,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
+olcPPolicyHashCleartext: TRUE

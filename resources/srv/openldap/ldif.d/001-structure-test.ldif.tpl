@@ -25,3 +25,9 @@ ou: Bind Users
 description: Root entry for Bind Users
 objectClass: top
 objectClass: organizationalUnit
+
+dn: ou=Policies,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
+ou: Policies
+description: Root entry for policies
+objectClass: top
+objectClass: organizationalUnit
