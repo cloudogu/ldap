@@ -32,7 +32,7 @@ LDAP_MAIL_ATTR=mail
 # Configuration of mail
 MAIL_SUBJECT="Your password has been changed"
 MAIL_BODY="Hello %name,\n\n\
-your password of your user %login has been changed.\n\n\
+your password of your user %login in the CES has been changed.\n\n\
 Regards."
 MAIL_BIN="mail"
 
@@ -90,7 +90,7 @@ do
 		logmsg="${MAIL_BODY}"
 		logmsg=`echo -e ${logmsg} | sed "s/%name/${name}/; s/%login/${login}/;"`
 
-		#echo "${logmsg}" | ${MAIL_BIN} -s "${MAIL_SUBJECT}" ${mail} >&2
+		echo "${logmsg}" | ${MAIL_BIN} -s "${MAIL_SUBJECT}" ${mail} >&2
 
 		echo "The password of the user '{$login}' has been changed on ${pwdChangedTime}. E-mail sent to ${mail}"
 	fi
