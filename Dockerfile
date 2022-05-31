@@ -19,8 +19,7 @@ RUN set -o errexit \
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
- && chmod 755 srv/openldap/create-sa.sh \
- && chmod 755 send-mail-after-changed-password.sh
+ && chmod 755 srv/openldap/create-sa.sh
 
 # LDAP PORT
 EXPOSE 389

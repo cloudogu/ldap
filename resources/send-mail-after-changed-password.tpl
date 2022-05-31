@@ -8,9 +8,7 @@ echo "Start the detection of changed user passwords since ${START_OF_THE_PERIOD}
 
 # Configuration of the LDAP and of LDAP search
 LDAP_HOSTURI="ldapi:///"
-# TODO: o and dc: must be configured
-# LDAP_SEARCHBASE="ou=people,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
-LDAP_SEARCHBASE="ou=people,o=ces.local,dc=cloudogu,dc=com"
+LDAP_SEARCHBASE="ou=people,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}"
 LDAP_SEARCHFILTER="(&(uid=*)(objectClass=inetOrgPerson))"
 LDAP_SEARCH_BIN="/usr/bin/ldapsearch"
 ldap_param="-Y EXTERNAL -H ${LDAP_HOSTURI} -LLL -Q"

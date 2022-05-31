@@ -172,6 +172,9 @@ else
   echo "password policy is already installed; nothing to do here"
 fi
 
+doguctl template /send-mail-after-changed-password.tpl /send-mail-after-changed-password.sh
+chmod 755 /send-mail-after-changed-password.sh
+
 # set stage for health check
 doguctl state ready
 
