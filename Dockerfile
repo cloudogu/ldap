@@ -14,7 +14,8 @@ RUN set -o errexit \
  && set -o pipefail \
  && apk update \
  && apk upgrade \
- && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy\
+ && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy \
+ && apk add --update mailx \
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
