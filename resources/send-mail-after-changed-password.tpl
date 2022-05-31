@@ -1,9 +1,17 @@
-# TODO: Must be read from persisted value
-START_OF_THE_PERIOD=20220512010203
-SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
-# TODO: persist SCRIPT_START_DATE for next script execution
-
 echo "##########"
+# Read start of the period from config file
+START_OF_THE_PERIOD_CONF_FILE=/send-mail-after-changed-password_starting-period
+if [ ! -f "$START_OF_THE_PERIOD_CONF_FILE" ]; then
+    echo "${START_OF_THE_PERIOD_CONF_FILE} does not exist. Now create these"
+    echo "START_OF_THE_PERIOD=$(date +%Y%m%d%H%M%S)" > ${START_OF_THE_PERIOD_CONF_FILE}
+fi
+
+source ${START_OF_THE_PERIOD_CONF_FILE}
+
+SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
+# Persist the start time of the script to be able to use this start point for the next script execution.
+echo "START_OF_THE_PERIOD=${SCRIPT_START_DATE}" > ${START_OF_THE_PERIOD_CONF_FILE}
+
 echo "Start the detection of changed user passwords since ${START_OF_THE_PERIOD}. Script starting time is ${SCRIPT_START_DATE}"
 
 # Configuration of the LDAP and of LDAP search
