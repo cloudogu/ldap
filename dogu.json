@@ -13,6 +13,12 @@
   ],
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
+  "Dependencies": [
+    {
+      "type": "dogu",
+      "name": "postfix"
+    }
+  ],
   "Configuration": [
     {
       "Name": "container_config/memory_limit",
