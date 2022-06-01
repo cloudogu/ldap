@@ -90,7 +90,7 @@ do
   fi
 
   # When the password change date has occurred after the relevant start of the period, send the user an email with the info about the changed password
-	if [ ${pwdChangedTime} -gt ${START_OF_THE_PERIOD} ]; then
+	if [[ ${pwdChangedTime} -ge ${START_OF_THE_PERIOD} && ${pwdChangedTime} -lt ${SCRIPT_START_DATE} ]]; then
     # TODO adapt
 		logmsg="${MAIL_BODY}"
 		logmsg=`echo -e ${logmsg} | sed "s/%name/${name}/; s/%uid/${uid}/;"`
