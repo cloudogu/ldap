@@ -32,7 +32,7 @@ LDAP_MAIL_ATTR=mail
 # Configuration of mail
 MAIL_SUBJECT="Your password has been changed"
 MAIL_BODY="Hello %name,\n\n\
-your password of your user %login in the CES has been changed.\n\n\
+your password of your user %uid in the CES has been changed.\n\n\
 Regards."
 MAIL_BIN="mail"
 
@@ -70,7 +70,7 @@ do
 	> ${buffer_file}
 
   # Convert returned values into variables
-	login=`grep -w "${LDAP_UID_ATTR}:" ${buffer_file} | cut -d : -f 2 \
+	uid=`grep -w "${LDAP_UID_ATTR}:" ${buffer_file} | cut -d : -f 2 \
 		| sed "s/^ *//;s/ *$//"`
 	name=`grep -w "${LDAP_CN_ATTR}:" ${buffer_file} | cut -d : -f 2\
 	 	| sed "s/^ *//;s/ *$//"`
@@ -88,11 +88,11 @@ do
 	if [ ${pwdChangedTime} -gt ${START_OF_THE_PERIOD} ]; then
     # TODO adapt
 		logmsg="${MAIL_BODY}"
-		logmsg=`echo -e ${logmsg} | sed "s/%name/${name}/; s/%login/${login}/;"`
+		logmsg=`echo -e ${logmsg} | sed "s/%name/${name}/; s/%uid/${uid}/;"`
 
 		echo "${logmsg}" | ${MAIL_BIN} -s "${MAIL_SUBJECT}" ${mail} >&2
 
-		echo "The password of the user '{$login}' has been changed on ${pwdChangedTime}. E-mail sent to ${mail}"
+		echo "The password of the user '$uid' has been changed on ${pwdChangedTime}. E-mail sent to ${mail}"
 	fi
 done < ${result_file}
 
