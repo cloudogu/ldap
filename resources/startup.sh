@@ -175,6 +175,8 @@ fi
 doguctl template /send-mail-after-changed-password.tpl /send-mail-after-changed-password.sh
 chmod 755 /send-mail-after-changed-password.sh
 
+doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
+
 # set stage for health check
 doguctl state ready
 

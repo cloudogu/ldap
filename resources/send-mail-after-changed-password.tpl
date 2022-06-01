@@ -30,11 +30,16 @@ LDAP_UID_ATTR=uid
 LDAP_MAIL_ATTR=mail
 
 # Configuration of mail
-MAIL_SUBJECT="Your password has been changed"
-MAIL_BODY="Hello %name,\n\n\
+MAIL_BIN="mail"
+MAIL_SUBJECT="{{ .Config.GetOrDefault "password_change/mail_subject" "Your password has been changed"}}"
+MAIL_BODY="{{ .Config.GetOrDefault "password_change/mail_text" ""}}"
+
+if [ -z "$MAIL_BODY" ]
+then
+  MAIL_BODY="Hello %name,\n\n\
 your password of your user %uid in the CES has been changed.\n\n\
 Regards."
-MAIL_BIN="mail"
+fi
 
 # Configuration of temporary files
 tmp_dir="/tmp/$$.checkldap.tmp"
