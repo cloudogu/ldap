@@ -35,6 +35,21 @@
       "Validation": {
         "Type": "BINARY_MEASUREMENT"
       }
+    },
+    {
+      "Name": "mail_sender",
+      "Description": "Email address to use as sender of the LDAP dogu",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_subject",
+      "Description": "Subject of the e-mail sent to the user after a password change.",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_text",
+      "Description": "Text of the e-mail sent to the user after a password change. As placeholders, '%uid' can be used for the user ID (user name) and '%name' for the complete name (cn).",
+      "Optional": true
     }
   ],
   "Volumes": [
