@@ -1,3 +1,8 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
 echo "##########"
 # Read start of the period from config file
 START_OF_THE_PERIOD_CONF_FILE=/send-mail-after-changed-password_starting-period
