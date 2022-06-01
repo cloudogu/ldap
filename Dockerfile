@@ -21,6 +21,9 @@ RUN set -o errexit \
  && chmod 755 startup.sh \
  && chmod 755 srv/openldap/create-sa.sh
 
+# Set time zone to UTC so that time zone is the same as LDAP.
+ENV TZ=UTC
+
 # LDAP PORT
 EXPOSE 389
 
