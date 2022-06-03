@@ -7,5 +7,6 @@ MAKEFILES_VERSION=4.8.0
 include build/make/variables.mk
 include build/make/self-update.mk
 include build/make/release.mk
+include bats.mk
 
 default: dogu-release
