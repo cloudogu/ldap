@@ -37,8 +37,24 @@
       }
     },
     {
+      "Name": "password_change/check_interval_minutes",
+      "Description": "Interval in minutes at which password changes will be checked [default: 1]",
+      "Optional": true,
+      "Default": "1"
+    },
+    {
       "Name": "mail_sender",
       "Description": "Email address to use as sender of the LDAP dogu",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_sender",
+      "Description": "Sender of the e-mail sent to the user after a password change.",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_sender_name",
+      "Description": "Sender name of the e-mail sent to the user after a password change.",
       "Optional": true
     },
     {
@@ -66,6 +82,13 @@
       "Owner": "100",
       "Group": "101",
       "NeedsBackup": true
+    },
+    {
+      "Name": "crontab-logs",
+      "Path": "/tmp/logs",
+      "Owner": "100",
+      "Group": "101",
+      "NeedsBackup": false
     }
   ],
   "ExposedCommands": [

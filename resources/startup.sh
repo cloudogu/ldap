@@ -20,6 +20,9 @@ echo "                       'V/(/////////////////////////////V'      "
 # shellcheck disable=SC1091
 source install-pwd-policy.sh
 
+# shellcheck disable=SC1091
+source /scheduled_jobs.sh
+
 LOGLEVEL=${LOGLEVEL:-0}
 
 # variables which are used while rendering templates are exported
@@ -172,8 +175,11 @@ else
   echo "password policy is already installed; nothing to do here"
 fi
 
-doguctl template /send-mail-after-changed-password.tpl /send-mail-after-changed-password.sh
-chmod 755 /send-mail-after-changed-password.sh
+echo "update password change notification user"
+update_pwd_change_notification_user
+
+echo "setup cron job"
+setup_cron
 
 doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
 

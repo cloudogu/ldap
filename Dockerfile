@@ -15,7 +15,7 @@ RUN set -o errexit \
  && apk update \
  && apk upgrade \
  && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy \
- && apk add mailx ssmtp \
+ && apk add mailx ssmtp su-exec \
  && rm -rf /var/cache/apk/* \
  # ensure permissions of scripts
  && chmod 755 startup.sh \
