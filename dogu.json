@@ -37,15 +37,16 @@
       }
     },
     {
+      "Name": "password_change/notification_enabled",
+      "Description": "Enables the email notification when a users password was changed",
+      "Optional": true,
+      "Default": "true"
+    },
+    {
       "Name": "password_change/check_interval_minutes",
       "Description": "Interval in minutes at which password changes will be checked [default: 1]",
       "Optional": true,
       "Default": "1"
-    },
-    {
-      "Name": "mail_sender",
-      "Description": "Email address to use as sender of the LDAP dogu",
-      "Optional": true
     },
     {
       "Name": "password_change/mail_sender",

@@ -13,7 +13,7 @@ if [ ! -f "$START_OF_THE_PERIOD_CONF_FILE" ]; then
   log_debug "${START_OF_THE_PERIOD_CONF_FILE} does not exist. Now create these"
   echo "START_OF_THE_PERIOD=$(date +%Y%m%d%H%M%S)" >${START_OF_THE_PERIOD_CONF_FILE}
 fi
-
+# shellcheck disable=SC1090
 source ${START_OF_THE_PERIOD_CONF_FILE}
 
 SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
@@ -68,7 +68,7 @@ ${LDAP_SEARCH_BIN} "${ldap_param}" -b "${LDAP_SEARCHBASE}" "${LDAP_SEARCHFILTER}
 > ${result_file}
 
 # Iterate over all entries found (=lines in file)
-while read dnStr; do
+while read -r dnStr; do
   # The file can also contain blank lines. These can be skipped.
   if [ ! "${dnStr}" ]; then
     continue
