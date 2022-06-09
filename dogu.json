@@ -40,7 +40,14 @@
       "Name": "password_change/notification_enabled",
       "Description": "Enables the email notification when a users password was changed",
       "Optional": true,
-      "Default": "true"
+      "Default": "true",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "true",
+          "false"
+        ]
+      }
     },
     {
       "Name": "password_change/check_interval_minutes",

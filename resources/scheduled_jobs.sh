@@ -5,31 +5,43 @@ set -o pipefail
 
 function setup_cron() {
   echo "setting up cronjob"
-
-  local config_interval_minutes INTERVAL_MINUTES minutes_regex='^([0-9]|[1-5][0-9])?$'
-  config_interval_minutes="$(doguctl config --default "1" "password_change/check_interval_minutes")"
-
-  if [[ "${config_interval_minutes}" == "0" ]]; then # every hour
-     INTERVAL_MINUTES="${config_interval_minutes}"
-  elif  [[ "${config_interval_minutes}" == "1" ]]; then # every minute
-     INTERVAL_MINUTES="*"
-  elif [[ "${config_interval_minutes}" =~ ${minutes_regex} ]]; then # every x minutes
-    INTERVAL_MINUTES="*/${config_interval_minutes}"
-  else
-    echo "error: wrong value for configuration entry password_change_check_interval_minutes: allowed values are numbers between 0 and 59" >&2
-    exit 1
+  local enabled
+  enabled="$(doguctl config --default "true" "password_change/notification_enabled")"
+  if [[ "${enabled}" == "false" ]]; then
+    echo "INFO: email notification is disabled"
+    return
   fi
+
+  INTERVAL_MINUTES="$(parse_cron_interval)"
   echo "use crontab setting ${INTERVAL_MINUTES} * * * *"
   export INTERVAL_MINUTES
 
   doguctl template /crontab.tpl /crontab
   # empty log file on each restart of the Dogu
-  touch /tmp/logs/scheduled_jobs.log
+  : >/tmp/logs/scheduled_jobs.log
   tail -f /tmp/logs/scheduled_jobs.log &
 
   crontab /crontab
 
   crond
+}
+
+parse_cron_interval() {
+  # regex to verify 1-9 or 10-59 or 60
+  local config_interval_minutes INTERVAL_MINUTES minutes_regex='^([1-9]|[1-5][0-9]|60)?$'
+  config_interval_minutes="$(doguctl config --default "1" "password_change/check_interval_minutes")"
+
+  if [[ "${config_interval_minutes}" == "60" ]]; then # every hour
+    INTERVAL_MINUTES="0"
+  elif [[ "${config_interval_minutes}" == "1" ]]; then # every minute
+    INTERVAL_MINUTES="*"
+  elif [[ "${config_interval_minutes}" =~ ${minutes_regex} ]]; then # every x minutes
+    INTERVAL_MINUTES="*/${config_interval_minutes}"
+  else
+    log_error "wrong value for configuration entry password_change_check_interval_minutes: allowed values are numbers between 1 and 60"
+    log_error "using default value 1 as fallback"
+  fi
+  echo "${INTERVAL_MINUTES}"
 }
 
 function update_pwd_change_notification_user() {
@@ -51,9 +63,15 @@ function get_mail_sender_name() {
 }
 
 function log_debug() {
+  local log_level
   log_level="$(doguctl config --default "WARN" "logging/root")"
   if [[ "${log_level}" == "DEBUG" ]]; then
     message="$1"
     echo "DEBUG: ${message}"
   fi
+}
+
+function log_error() {
+  message="$1"
+  echo "ERROR: ${message}" >&2
 }
