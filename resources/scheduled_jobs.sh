@@ -5,7 +5,7 @@ set -o pipefail
 
 function setup_cron() {
   echo "setting up cronjob"
-  local enabled
+  local enabled INTERVAL_MINUTES
   enabled="$(doguctl config --default "true" "password_change/notification_enabled")"
   if [[ "${enabled}" == "false" ]]; then
     echo "INFO: email notification is disabled"
@@ -13,6 +13,11 @@ function setup_cron() {
   fi
 
   INTERVAL_MINUTES="$(parse_cron_interval)"
+  if [[ "${INTERVAL_MINUTES}" == "<invalid>" ]]; then
+    log_error "wrong value for configuration entry password_change_check_interval_minutes: allowed values are numbers between 1 and 60"
+    log_error "using default value 1 as fallback"
+    INTERVAL_MINUTES="*"
+  fi
   echo "use crontab setting ${INTERVAL_MINUTES} * * * *"
   export INTERVAL_MINUTES
 
@@ -38,8 +43,7 @@ parse_cron_interval() {
   elif [[ "${config_interval_minutes}" =~ ${minutes_regex} ]]; then # every x minutes
     INTERVAL_MINUTES="*/${config_interval_minutes}"
   else
-    log_error "wrong value for configuration entry password_change_check_interval_minutes: allowed values are numbers between 1 and 60"
-    log_error "using default value 1 as fallback"
+    INTERVAL_MINUTES="<invalid>"
   fi
   echo "${INTERVAL_MINUTES}"
 }
@@ -73,5 +77,5 @@ function log_debug() {
 
 function log_error() {
   message="$1"
-  echo "ERROR: ${message}" >&2
+  echo "ERROR: ${message}"
 }
