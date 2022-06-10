@@ -11,7 +11,7 @@ Die E-Mail wird an die im LDAP hinterlegte E-Mail-Adresse des Nutzers verschickt
 Die Absender-E-Mail-Adresse, der Betreff und der Text der E-Mail können über folgende etcd-Werte konfiguriert werden:
 
 * `password_change/notification_enabled`: legt fest, ob die E-Mail-Benachrichtung aktiv sein soll.
-* `password_change/mail_sender`: gibt die E-Mail-Adresse an, die als Absender der E-Mail angezeigt wird.
+* `password_change/mail_sender_address`: gibt die E-Mail-Adresse an, die als Absender der E-Mail angezeigt wird.
 * `password_change/mail_sender_name`: gibt den Namen an, der als Absender der E-Mail angezeigt wird.
 * `password_change/mail_subject`: gibt den Betreff der E-Mail an.
 * `password_change/mail_text`: gibt den Text der E-Mail an.

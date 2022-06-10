@@ -3,12 +3,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-function setup_cron() {
-  echo "setting up cronjob"
+DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@cloudogu.com"
+
+setup_cron() {
   local enabled INTERVAL_MINUTES
   enabled="$(doguctl config --default "true" "password_change/notification_enabled")"
   if [[ "${enabled}" == "false" ]]; then
-    echo "INFO: email notification is disabled"
+    echo "INFO: e-mail notification is disabled"
     return
   fi
 
@@ -48,7 +49,7 @@ parse_cron_interval() {
   echo "${INTERVAL_MINUTES}"
 }
 
-function update_pwd_change_notification_user() {
+update_pwd_change_notification_user() {
   local mailuser username_from_config
   mailuser="$(getent passwd mailuser || true)"
   if [[ $mailuser == "" ]]; then
@@ -61,12 +62,24 @@ function update_pwd_change_notification_user() {
   sed -E -i "s/(mailuser.*:)(.*)(,{3}:.*)/\1${username_from_config}\3/g" /etc/passwd
 }
 
-function get_mail_sender_name() {
+get_mail_sender_name() {
   local default="$1"
   doguctl config --default "${default}" "password_change/mail_sender_name"
 }
 
-function log_debug() {
+update_email_sender_alias_mapping() {
+  local MAIL_SENDER_ADDRESS
+  MAIL_SENDER_ADDRESS=$(doguctl config --default "${DEFAULT_MAIL_SENDER_ADDRESS}" password_change/mail_sender_address)
+  if [[ ! "${MAIL_SENDER_ADDRESS}" == "${DEFAULT_MAIL_SENDER_ADDRESS}" && ! "${MAIL_SENDER_ADDRESS}" =~ ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+$ ]]; then
+    log_error "The configured sender e-mail address seems to be invalid. Falling back to default address: ${DEFAULT_MAIL_SENDER_ADDRESS}"
+    MAIL_SENDER_ADDRESS="${DEFAULT_MAIL_SENDER_ADDRESS}"
+  fi
+
+  export MAIL_SENDER_ADDRESS
+  doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
+}
+
+log_debug() {
   local log_level
   log_level="$(doguctl config --default "WARN" "logging/root")"
   if [[ "${log_level}" == "DEBUG" ]]; then
@@ -75,7 +88,7 @@ function log_debug() {
   fi
 }
 
-function log_error() {
+log_error() {
   message="$1"
   echo "ERROR: ${message}"
 }

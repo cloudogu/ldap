@@ -181,7 +181,8 @@ update_pwd_change_notification_user
 echo "setup cron job"
 setup_cron
 
-doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
+echo "update password change sender address mapping"
+update_email_sender_alias_mapping
 
 # set stage for health check
 doguctl state ready

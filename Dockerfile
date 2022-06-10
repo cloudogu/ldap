@@ -9,9 +9,7 @@ ENV LDAP_VERSION="2.4.58-r0"
 COPY ./resources /
 
 # INSTALL SOFTWARE
-RUN set -o errexit \
- && set -o nounset \
- && set -o pipefail \
+RUN set -eux -o pipefail \
  && apk update \
  && apk upgrade \
  && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy \

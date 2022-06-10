@@ -77,7 +77,7 @@ while read -r dnStr; do
   # cut 'dn'-prefix
   dn="$(echo "${dnStr}" | cut -d : -f 2)"
 
-  # Read the dn (distinguish name) cn (common name), uid (user ID), email address and password change date and write them to a file.
+  # Read the dn (distinguish name) cn (common name), uid (user ID), e-mail address and password change date and write them to a file.
   ${LDAP_SEARCH_BIN} "${ldap_param}" -b "${dn}" \
   ${LDAP_CN_ATTR} ${LDAP_UID_ATTR} ${LDAP_MAIL_ATTR} pwdChangedTime \
   > ${buffer_file}
@@ -93,7 +93,7 @@ while read -r dnStr; do
     continue
   fi
 
-  # When the password change date has occurred after the relevant start of the period, send the user an email with the info about the changed password
+  # When the password change date has occurred after the relevant start of the period, send the user an e-mail with the info about the changed password
   if [[ ${pwdChangedTime} -ge ${START_OF_THE_PERIOD} && ${pwdChangedTime} -lt ${SCRIPT_START_DATE} ]]; then
     logmsg="${MAIL_BODY}"
     logmsg="$(echo -e "${logmsg}" | sed "s/%name/${name}/; s/%uid/${uid}/;")"

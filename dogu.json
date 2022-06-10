@@ -38,7 +38,7 @@
     },
     {
       "Name": "password_change/notification_enabled",
-      "Description": "Enables the email notification when a users password was changed",
+      "Description": "Enables the e-mail notification when a users password was changed",
       "Optional": true,
       "Default": "true",
       "Validation": {
@@ -56,8 +56,8 @@
       "Default": "1"
     },
     {
-      "Name": "password_change/mail_sender",
-      "Description": "Sender of the e-mail sent to the user after a password change.",
+      "Name": "password_change/mail_sender_address",
+      "Description": "Sender address of the e-mail sent to the user after a password change.",
       "Optional": true
     },
     {
