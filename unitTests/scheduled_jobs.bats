@@ -44,33 +44,33 @@ teardown() {
 }
 
 @test "log_debug should log nothing if the log level is set to WARN" {
-#    source /workspace/resources/scheduled_jobs.sh
-#    mock_set_output "${doguctl}" "WARN" 1
+    source /workspace/resources/scheduled_jobs.sh
+    mock_set_output "${doguctl}" "WARN" 1
 
-#    run log_debug "Test Message"
+    run log_debug "Test Message"
 
-#    assert_success
-#    assert_output ""
+    assert_success
+    assert_output ""
 }
 
 @test "get_mail_sender_name should return the given default value if the key is not set" {
-#    source /workspace/resources/scheduled_jobs.sh
-#    mock_set_output "${doguctl}" "the default name" 1
+    source /workspace/resources/scheduled_jobs.sh
+    mock_set_output "${doguctl}" "the default name" 1
 
-#    run get_mail_sender_name "the default name"
+    run get_mail_sender_name "the default name"
 
-#    assert_success
-#    assert_output "the default name"
+    assert_success
+    assert_output "the default name"
 }
 
 @test "get_mail_sender_name should return the configured value if the key is set" {
-#    source /workspace/resources/scheduled_jobs.sh
-#    mock_set_output "${doguctl}" "my change mailer" 1
+    source /workspace/resources/scheduled_jobs.sh
+    mock_set_output "${doguctl}" "my change mailer" 1
 
-#    run get_mail_sender_name "the default name"
+    run get_mail_sender_name "the default name"
 
-#    assert_success
-#    assert_output "my change mailer"
+    assert_success
+    assert_output "my change mailer"
 }
 
 getent() { echo 'user found'; }

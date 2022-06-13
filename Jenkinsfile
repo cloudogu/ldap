@@ -35,7 +35,7 @@ node('vagrant'){
       }
 
       stage('Shellcheck'){
-         shellCheck()
+         shellCheck("./resources/install-pwd-policy.sh ./resources/scheduled_jobs.sh ./resources/send-mail-after-changed-password.sh ./resources/startup.sh ./resources/srv/openldap/create-sa.sh ./resources/srv/openldap/remove-sa.sh")
       }
 
       stage('Shell tests') {
@@ -122,7 +122,7 @@ def executeShellTests() {
     try {
         sh "mkdir -p target"
 
-        batsContainer = batsImage.inside("--entrypoint='' -v ${WORKSPACE}:/workspace") {
+        batsContainer = batsImage.mountJenkinsUser().inside("--entrypoint='' -v ${WORKSPACE}:/workspace") {
             sh "make unit-test-shell-ci"
         }
     } finally {
