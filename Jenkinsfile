@@ -122,7 +122,7 @@ def executeShellTests() {
     try {
         sh "mkdir -p target"
 
-        batsContainer = batsImage.mountJenkinsUser().inside("--entrypoint='' -v ${WORKSPACE}:/workspace") {
+        batsContainer = batsImage.inside("--entrypoint='' -v ${WORKSPACE}:/workspace") {
             sh "make unit-test-shell-ci"
         }
     } finally {
