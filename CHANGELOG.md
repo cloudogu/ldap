@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [v2.4.58-3] - 2022-06-14
+### Added
+- an e-mail notification whenever a users password has been changed by anyone (#21)
 
 ## [v2.4.58-2] - 2022-04-13
 ### Added
