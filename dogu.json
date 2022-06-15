@@ -1,6 +1,6 @@
 {
   "Name": "official/ldap",
-  "Version": "2.4.58-2",
+  "Version": "2.4.58-3",
   "DisplayName": "OpenLDAP",
   "Description": "OpenLDAP server for user and group management.",
   "Url": "http://www.openldap.org",
@@ -13,6 +13,12 @@
   ],
   "Logo": "https://cloudogu.com/images/dogus/openldap.png",
   "Image": "registry.cloudogu.com/official/ldap",
+  "Dependencies": [
+    {
+      "type": "dogu",
+      "name": "postfix"
+    }
+  ],
   "Configuration": [
     {
       "Name": "container_config/memory_limit",
@@ -28,6 +34,60 @@
       "Optional": true,
       "Validation": {
         "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "password_change/notification_enabled",
+      "Description": "Enables the e-mail notification when a users password was changed",
+      "Optional": true,
+      "Default": "true",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "true",
+          "false"
+        ]
+      }
+    },
+    {
+      "Name": "password_change/check_interval_minutes",
+      "Description": "Interval in minutes at which password changes will be checked [default: 1]",
+      "Optional": true,
+      "Default": "1"
+    },
+    {
+      "Name": "password_change/mail_sender_address",
+      "Description": "Sender address of the e-mail sent to the user after a password change.",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_sender_name",
+      "Description": "Sender name of the e-mail sent to the user after a password change.",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_subject",
+      "Description": "Subject of the e-mail sent to the user after a password change.",
+      "Optional": true
+    },
+    {
+      "Name": "password_change/mail_text",
+      "Description": "Text of the e-mail sent to the user after a password change. As placeholders, '%uid' can be used for the user ID (user name) and '%name' for the complete name (cn).",
+      "Optional": true
+    },
+    {
+      "Name": "logging/root",
+      "Description": "Set the root log level to one of ERROR, WARN, INFO, DEBUG.",
+      "Optional": true,
+      "Default": "INFO",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "WARN",
+          "DEBUG",
+          "INFO",
+          "ERROR"
+        ]
       }
     }
   ],
@@ -45,6 +105,13 @@
       "Owner": "100",
       "Group": "101",
       "NeedsBackup": true
+    },
+    {
+      "Name": "crontab-logs",
+      "Path": "/tmp/logs",
+      "Owner": "100",
+      "Group": "101",
+      "NeedsBackup": false
     }
   ],
   "ExposedCommands": [

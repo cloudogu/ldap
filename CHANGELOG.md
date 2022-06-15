@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.4.58-3] - 2022-06-14
+### Added
+- an e-mail notification whenever a users password has been changed by anyone (#21)
+
 ## [v2.4.58-2] - 2022-04-13
 ### Added
 - a default password policy (#14)
@@ -42,9 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.4.48-1] - 2020-10-06
 ### Changed
 - upgrade to OpenLDAP 2.4.48
-- change user's email address to be unique in the LDAP directory (#8)
-   - existing user data are kept without change, even those with non-unique email addresses
-   - updating a person's directory entry will lead to an error `some attributes not unique` if the (non-unique) email address is supposed to be kept
+- change user's e-mail address to be unique in the LDAP directory (#8)
+   - existing user data are kept without change, even those with non-unique e-mail addresses
+   - updating a person's directory entry will lead to an error `some attributes not unique` if the (non-unique) e-mail address is supposed to be kept
 - Added more dogu build safety via CI/CD
     - Added modular makefiles
     - Added automated release
