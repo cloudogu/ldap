@@ -17,13 +17,13 @@ echo "                       'V/(/////////////////////////////V'      "
 
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
-# shellcheck disable=SC1091
-source install-pwd-policy.sh
+# Migration Function
+source /migration.sh
 
 # shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
-# LOGLEVEL=${LOGLEVEL:-0}
+LOGLEVEL=${LOGLEVEL:-0}
 
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
@@ -54,11 +54,11 @@ chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
 # because ldapadd uses the default configuration which are not compatible with the backend
-echo "removing old config files"
+echo "[DOGU] Removing old config files ..."
 # remove default configuration
 rm -f ${OPENLDAP_ETC_DIR}/*.conf
 
-echo "get domain and root password"
+echo "[DOGU] Get domain and root password ..."
 # get domain and root password
 LDAP_ROOTPASS=$(doguctl random)
 LDAP_CONFIG_PASS=$(doguctl config -e -d "${LDAP_ROOTPASS}" rootpwd)
@@ -69,27 +69,27 @@ LDAP_DOMAIN=$(doguctl config --global domain)
 export LDAP_DOMAIN
 
 if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
-  echo "rendering ldap.conf template"
+  echo "[DOGU] Rendering ldap.conf template ..."
   doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
 fi
 
 if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
-  echo "rendering slapd-config.ldif template"
+  echo "[DOGU] Rendering slapd-config.ldif template ..."
   doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
 fi
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
-  echo "initializing ldap"
+  echo "[DOGU] Initializing ldap ..."
 
   # set stage for health check
   doguctl state installing
 
-  echo "get admin user details"
+  echo "[DOGU] Get admin user details ..."
   ADMIN_USERNAME=$(doguctl config -d admin admin_username)
   export ADMIN_USERNAME
 
-  echo "get manager and admin group name"
+  echo "[DOGU] Get manager and admin group name ..."
   MANAGER_GROUP=$(doguctl config --global -d cesManager manager_group)
   export MANAGER_GROUP
 
@@ -111,7 +111,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   ADMIN_MAIL=$(doguctl config -d "${DEFAULT_ADMIN_MAIL}" admin_mail)
   export ADMIN_MAIL
 
-  echo "get admin password"
+  echo "[DOGU] Get admin password ..."
   # TODO remove from etcd ???
   ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
   ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
@@ -169,59 +169,22 @@ EOF
   fi
 fi
 
+# For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
 if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
-
-  echo "moving exports..."	
-  mkdir -p ${MIGRATION_TMP_DIR}
-  ls -la /etc/openldap/slapd.d
-  sleep 5
-  cp /etc/openldap/slapd.d/config.ldif ${MIGRATION_TMP_DIR}
-  cp /etc/openldap/slapd.d/data.ldif ${MIGRATION_TMP_DIR}
-
-  echo "changing config..."
-  sed -i '/back_bdb.so/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/back_hdb.so/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i 's/hdb/mdb/g' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i 's/Hdb/Mdb/g' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/olcDbCheckpoint/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/set_cachesize/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/set_lk_max_locks/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/set_lk_max_objects/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/set_lk_max_lockers/d' ${MIGRATION_TMP_DIR}/config.ldif
-  sed -i '/dn: cn={4}ppolicy/,/^$/d' ${MIGRATION_TMP_DIR}/config.ldif
-
-  echo "cleanup config and db folders..."
-  rm -rf /etc/openldap/slapd.d/*
-  rm -rf /var/lib/openldap/*
-
-  echo "setting rights correctly..."
-  chmod -R 700 /etc/openldap/slapd.d
-  chmod -R 700 /var/lib/openldap
-  chown -R ldap:ldap /etc/openldap/slapd.d
-  chown -R ldap:ldap /var/lib/openldap
-
-  echo "importing dump..."
-  slapadd -n 0 -F /etc/openldap/slapd.d -l ${MIGRATION_TMP_DIR}/config.ldif
-  slapadd -n 1 -F /etc/openldap/slapd.d -l ${MIGRATION_TMP_DIR}/data.ldif
-
-  chmod -R 700 /etc/openldap/slapd.d
-  chmod -R 700 /var/lib/openldap
-  chown -R ldap:ldap /etc/openldap/slapd.d
-  chown -R ldap:ldap /var/lib/openldap
-
+  start_migration
 fi
 
-echo "update password change notification user"
+echo "[DOGU] Update password change notification user ..."
 update_pwd_change_notification_user
 
-echo "setup cron job"
+echo "[DOGU] Setup cron job ..."
 setup_cron
 
-echo "update password change sender address mapping"
+echo "[DOGU] Update password change sender address mapping ..."
 update_email_sender_alias_mapping
 
 # set stage for health check
 doguctl state ready
 
-echo "Starting ldap..."
-/usr/sbin/slapd -h ldap:/// -u ldap -g ldap
+echo "[DOGU] Starting ldap ..."
+/usr/sbin/slapd -h ldap:/// -u ldap -g ldap -d ${LOGLEVEL}
