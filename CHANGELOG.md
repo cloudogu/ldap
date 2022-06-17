@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-r0] - 2022-06-17
+### Changed
+- Upgrade base image to 3.15.3-1
+- Upgarde OpenLDAP to v2.6.2.-r0
+- Added conversion database format from old hdb to mdb format
+- Removed ppolicy schema due to deprecated status
+
 ## [v2.4.58-3] - 2022-06-14
 ### Added
 - an e-mail notification whenever a users password has been changed by anyone (#21)
