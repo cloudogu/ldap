@@ -26,7 +26,7 @@ log_debug "Start the detection of changed user passwords since ${START_OF_THE_PE
 LDAP_DOMAIN="$(doguctl config --global domain)"
 OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
-LDAP_HOSTURI="ldapi:///"
+LDAP_HOSTURI="ldap:///"
 LDAP_SEARCHBASE="ou=people,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
 LDAP_SEARCHFILTER="(&(uid=*)(objectClass=inetOrgPerson))"
 LDAP_SEARCH_BIN="/usr/bin/ldapsearch"

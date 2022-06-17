@@ -23,7 +23,7 @@ source install-pwd-policy.sh
 # shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
-LOGLEVEL=${LOGLEVEL:-0}
+# LOGLEVEL=${LOGLEVEL:-0}
 
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
@@ -33,11 +33,14 @@ export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
 export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
 export OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
 export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
-export OPENLDAP_BACKEND_DATABASE="hdb"
-export OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
+export OPENLDAP_BACKEND_DATABASE="mdb"
+export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+
+# migration tmp folder
+MIGRATION_TMP_DIR="/tmp/migration"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
@@ -133,7 +136,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  slapd -u ldap -g ldap -h ldapi:///
+  slapd -u ldap -g ldap -h ldap:///
 
   for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
     echo >&2 "applying $f"
@@ -166,13 +169,46 @@ EOF
   fi
 fi
 
-# Is password schema already included?
-PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
-if [[ ! -f "$PASSWORD_SCHEMA_FILE" ]]; then
-  echo "installing password policy"
-  installPwdPolicy
-else
-  echo "password policy is already installed; nothing to do here"
+if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
+
+  echo "moving exports..."	
+  mkdir -p ${MIGRATION_TMP_DIR}
+  ls -la /etc/openldap/slapd.d
+  sleep 5
+  cp /etc/openldap/slapd.d/config.ldif ${MIGRATION_TMP_DIR}
+  cp /etc/openldap/slapd.d/data.ldif ${MIGRATION_TMP_DIR}
+
+  echo "changing config..."
+  sed -i '/back_bdb.so/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/back_hdb.so/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i 's/hdb/mdb/g' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i 's/Hdb/Mdb/g' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/olcDbCheckpoint/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/set_cachesize/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/set_lk_max_locks/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/set_lk_max_objects/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/set_lk_max_lockers/d' ${MIGRATION_TMP_DIR}/config.ldif
+  sed -i '/dn: cn={4}ppolicy/,/^$/d' ${MIGRATION_TMP_DIR}/config.ldif
+
+  echo "cleanup config and db folders..."
+  rm -rf /etc/openldap/slapd.d/*
+  rm -rf /var/lib/openldap/*
+
+  echo "setting rights correctly..."
+  chmod -R 700 /etc/openldap/slapd.d
+  chmod -R 700 /var/lib/openldap
+  chown -R ldap:ldap /etc/openldap/slapd.d
+  chown -R ldap:ldap /var/lib/openldap
+
+  echo "importing dump..."
+  slapadd -n 0 -F /etc/openldap/slapd.d -l ${MIGRATION_TMP_DIR}/config.ldif
+  slapadd -n 1 -F /etc/openldap/slapd.d -l ${MIGRATION_TMP_DIR}/data.ldif
+
+  chmod -R 700 /etc/openldap/slapd.d
+  chmod -R 700 /var/lib/openldap
+  chown -R ldap:ldap /etc/openldap/slapd.d
+  chown -R ldap:ldap /var/lib/openldap
+
 fi
 
 echo "update password change notification user"
@@ -188,4 +224,4 @@ update_email_sender_alias_mapping
 doguctl state ready
 
 echo "Starting ldap..."
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"
+/usr/sbin/slapd -h ldap:/// -u ldap -g ldap

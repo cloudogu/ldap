@@ -116,11 +116,6 @@ dn: olcDatabase={{.Env.Get "OPENLDAP_BACKEND_DATABASE" }},cn=config
 objectClass: olcDatabaseConfig
 objectClass: {{.Env.Get "OPENLDAP_BACKEND_OBJECTCLASS" }}
 olcDatabase: {{.Env.Get "OPENLDAP_BACKEND_DATABASE" }}
-olcDbCheckpoint: 512 30
-olcDbConfig: set_cachesize 0 2097152 0
-olcDbConfig: set_lk_max_objects 1500
-olcDbConfig: set_lk_max_locks 1500
-olcDbConfig: set_lk_max_lockers 1500
 olcLastMod: TRUE
 olcSuffix: {{.Env.Get "OPENLDAP_SUFFIX" }}
 olcDbDirectory: {{.Env.Get "OPENLDAP_BACKEND_DIR" }}
@@ -155,7 +150,7 @@ olcAccess: to *
   by * read
 
 # BACKEND MEMBEROF OVERLAY
-dn: olcOverlay={0}memberof,olcDatabase={1}hdb,cn=config
+dn: olcOverlay={0}memberof,olcDatabase={1}mdb,cn=config
 objectClass: olcConfig
 objectClass: olcOverlayConfig
 objectClass: olcMemberOf
@@ -167,7 +162,7 @@ olcMemberOfMemberAD: member
 olcMemberOfMemberOfAD: memberOf
 
 # BACKEND REFINT OVERLAY
-dn: olcOverlay={1}refint,olcDatabase={1}hdb,cn=config
+dn: olcOverlay={1}refint,olcDatabase={1}mdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcRefintConfig
 olcOverlay: {1}refint
@@ -178,7 +173,7 @@ olcRefintAttribute: member
 olcRefintAttribute: memberOf
 
 # BACKEND UNIQUE OVERLAY
-dn: olcOverlay={3}unique,olcDatabase={1}hdb,cn=config
+dn: olcOverlay={3}unique,olcDatabase={1}mdb,cn=config
 objectClass: olcUniqueConfig
 objectClass: olcOverlayConfig
 objectClass: olcConfig
@@ -187,7 +182,7 @@ olcOverlay: {3}unique
 olcUniqueURI: ldap:///?mail?sub
 
 # BACKEND PPOLICY OVERLAY
-dn: olcOverlay={4}ppolicy,olcDatabase={1}hdb,cn=config
+dn: olcOverlay={4}ppolicy,olcDatabase={1}mdb,cn=config
 objectClass: olcConfig
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig

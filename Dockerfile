@@ -1,23 +1,23 @@
-FROM registry.cloudogu.com/official/base:3.14.3-1
+FROM registry.cloudogu.com/official/base:3.15.3-1
 
 LABEL NAME="official/ldap" \
-      VERSION="2.4.58-3" \
+      VERSION="2.6.2-1" \
       maintainer="hello@cloudogu.com"
 
-ENV LDAP_VERSION="2.4.58-r0"
+ENV LDAP_VERSION="2.6.2-r0"
 
 COPY ./resources /
 
-# INSTALL SOFTWARE
+# Install application and dependencies
 RUN set -eux -o pipefail \
- && apk update \
- && apk upgrade \
- && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-hdb openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique openldap-overlay-ppolicy \
- && apk add mailx ssmtp su-exec \
- && rm -rf /var/cache/apk/* \
- # ensure permissions of scripts
- && chmod 755 startup.sh \
- && chmod 755 srv/openldap/create-sa.sh
+    && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
+                     openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \ 
+                     openldap-overlay-ppolicy  \
+    && apk add mailx ssmtp su-exec \
+    && rm -rf /var/cache/apk/* \
+    # ensure permissions of scripts
+    && chmod 755 startup.sh \
+    && chmod 755 srv/openldap/create-sa.sh
 
 # Set time zone to UTC so that time zone is the same as LDAP.
 ENV TZ=UTC
