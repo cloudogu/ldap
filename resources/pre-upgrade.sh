@@ -94,16 +94,14 @@ function versionXLessOrEqualThanY() {
   return 1
 }
 
-function startConvertDB () {
+function start_export () {
   # Creating dump
-  echo "exporting DB ..."
+  echo "[DOGU] exporting DB ..."
   slapcat -n 0 -l ${MIGRATION_TMP_DIR}/config.ldif
   slapcat -n 1 -l ${MIGRATION_TMP_DIR}/data.ldif
   touch /etc/openldap/slapd.d/start_migration
   cp ${MIGRATION_TMP_DIR}/config.ldif /etc/openldap/slapd.d
   cp ${MIGRATION_TMP_DIR}/data.ldif /etc/openldap/slapd.d
-  ls -la /etc/openldap/slapd.d
-  sleep 5
 }
 
 # versionXLessThanY returns true if X is less than Y; otherwise false
@@ -111,7 +109,6 @@ function versionXLessThanY() {
   if [[ "${1}" == "${2}" ]]; then
     return 1
   fi
-
   versionXLessOrEqualThanY "${1}" "${2}"
 }
 
@@ -121,6 +118,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_preupgrade "$@"
 fi
 
-startConvertDB 
+# exporting old config and data
+start_export
 
 
