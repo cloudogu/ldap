@@ -40,7 +40,7 @@ OPENLDAP_ULIMIT="2048"
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 # migration tmp folder
-MIGRATION_TMP_DIR="/tmp/migration"
+export MIGRATION_TMP_DIR="/tmp/migration"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
@@ -187,4 +187,4 @@ update_email_sender_alias_mapping
 doguctl state ready
 
 echo "[DOGU] Starting ldap ..."
-/usr/sbin/slapd -h ldap:/// -u ldap -g ldap -d ${LOGLEVEL}
+/usr/sbin/slapd -h ldap:/// -u ldap -g ldap -d "${LOGLEVEL}"
