@@ -26,13 +26,6 @@ function run_preupgrade() {
   echo "Set registry flag so startup script waits for post-upgrade to finish..."
   doguctl state "upgrading"
 
-  if versionXLessOrEqualThanY "${FROM_VERSION}" "2.6.0-1" ; then
-    # this migration only needs to be done if the additional plugins volume was already created
-    if ! versionXLessOrEqualThanY "${FROM_VERSION}" "2.6.0-1" ; then
-      startConvertDB
-    fi
-  fi
-
   doguctl config "startup/setup_done" "true"
 
   echo "Redmine pre-upgrade done"
