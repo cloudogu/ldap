@@ -1,3 +1,9 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+
 function start_migration () {
   echo "[DOGU] Moving exports ..."	
   mkdir -p "${MIGRATION_TMP_DIR}"
