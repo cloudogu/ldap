@@ -17,7 +17,7 @@ echo "                       'V/(/////////////////////////////V'      "
 
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
-# Migration Function
+# shellcheck disable=SC1091
 source /migration.sh
 
 # shellcheck disable=SC1091
