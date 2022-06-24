@@ -16,7 +16,7 @@ function run_preupgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
 
-  echo "Executing Redmine pre-upgrade from ${FROM_VERSION} to ${TO_VERSION}"
+  echo "Executing LDAP pre-upgrade from ${FROM_VERSION} to ${TO_VERSION}"
 
   if [ "${FROM_VERSION}" = "${TO_VERSION}" ]; then
     echo "FROM and TO versions are the same; Exiting..."
@@ -28,7 +28,7 @@ function run_preupgrade() {
 
   doguctl config "startup/setup_done" "true"
 
-  echo "Redmine pre-upgrade done"
+  echo "LDAP pre-upgrade done"
 }
 
 # versionXLessOrEqualThanY returns true if X is less than or equal to Y; otherwise false
