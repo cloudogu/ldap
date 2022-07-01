@@ -54,7 +54,6 @@ include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/core.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/cosine.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/nis.ldif
 include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/inetorgperson.ldif
-include: file://{{.Env.Get "OPENLDAP_ETC_DIR" }}/schema/ppolicy.ldif
 
 #
 # FRONTEND DATABASE
