@@ -5,7 +5,6 @@ set -o pipefail
 
 OPENLDAP_RUN_DIR="/var/run/openldap"
 export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
-slapd_exe=$(command -v slapd)
 MIGRATION_TMP_DIR="/tmp/migration"
 
 if [[ ! -d ${MIGRATION_TMP_DIR} ]]; then
