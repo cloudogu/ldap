@@ -41,6 +41,10 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
+hasPwdPolicySchemaBeenIncluded=false
+hasPwdPolicyModuleBeenInstalled=false
+hasPwdPolicyOverlayBeenInstalled=false
+
 ######
 
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
@@ -120,6 +124,10 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
 
+  hasPwdPolicySchemaBeenIncluded=true
+  hasPwdPolicyModuleBeenInstalled=true
+  hasPwdPolicyOverlayBeenInstalled=true
+
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
   shopt -s globstar nullglob
@@ -135,10 +143,17 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   slapd -u ldap -g ldap -h ldapi:///
 
-  for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
-    echo >&2 "applying $f"
-    ldapadd -Y EXTERNAL -f "$f" 2>&1
-  done
+  rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
+  if ! ldapsearch -x -b "$rootDN" > /dev/null
+  then
+    for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
+      echo >&2 "applying $f"
+      ldapadd -Y EXTERNAL -f "$f" 2>&1
+    done
+  else
+    echo "Root entry already exists; continue"
+  fi
+
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
     ldapmodify -Y EXTERNAL << EOF
@@ -149,8 +164,26 @@ member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 EOF
   fi
+fi
 
-  if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
+if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
+  slapd_exe=$(command -v slapd)
+  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
+
+  slapd -u ldap -g ldap -h ldapi:///
+fi
+
+# does password entry already exists?
+policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
+if ! ldapsearch -x -b "$policyDN" > /dev/null
+then
+  echo "installing password policy"
+  installPwdPolicy $hasPwdPolicySchemaBeenIncluded $hasPwdPolicyModuleBeenInstalled $hasPwdPolicyOverlayBeenInstalled
+else
+  echo "password policy is already installed; nothing to do here"
+fi
+
+if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
   else
@@ -163,16 +196,6 @@ EOF
       echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
     done
     echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
-  fi
-fi
-
-# Is password schema already included?
-PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
-if [[ ! -f "$PASSWORD_SCHEMA_FILE" ]]; then
-  echo "installing password policy"
-  installPwdPolicy
-else
-  echo "password policy is already installed; nothing to do here"
 fi
 
 echo "update password change notification user"
