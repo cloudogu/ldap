@@ -7,17 +7,20 @@ function installPwdPolicy() {
   # set stage for health check
   doguctl state installing
 
-  isPasswordPolicySchemaAlreadyIncluded=$1
-  isPasswordPolicyModuleAlreadyInstalled=$2
-  isPasswordPolicyOverlayAlreadyInstalled=$3
+  existsPasswordPolicyConfiguration=false
+  PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
+  if [ -f "$PASSWORD_SCHEMA_FILE" ]; then
+    echo "configuration of password policy already exists; only add LDAP entries."
+    existsPasswordPolicyConfiguration=true
+  fi
 
-  if [ "$isPasswordPolicySchemaAlreadyIncluded" != true ]; then
+  if [ "$existsPasswordPolicyConfiguration" != true ]; then
     # start installation and configuration of password policy
     echo "include password policy schema"
     ldapadd -Y EXTERNAL -H ldapi:/// -f "${OPENLDAP_ETC_DIR}"/schema/ppolicy.ldif
   fi
 
-  if [ "$isPasswordPolicyModuleAlreadyInstalled" != true ]; then
+  if [ "$existsPasswordPolicyConfiguration" != true ]; then
     echo "install password policy module"
     ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: cn=module{0},cn=config
@@ -36,7 +39,7 @@ description: Root entry for policies
 ou: Policies
 EOF
 
-  if [ "$isPasswordPolicyOverlayAlreadyInstalled" != true ]; then
+  if [ "$existsPasswordPolicyConfiguration" != true ]; then
   echo "add password policy overlay"
   ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
@@ -59,5 +62,5 @@ pwdAttribute: userPassword
 pwdMustChange: TRUE
 EOF
 
-  echo "Installation and configuriation of password policy finished"
+  echo "Installation and configuration of password policy finished"
 }

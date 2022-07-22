@@ -45,6 +45,30 @@ hasPwdPolicySchemaBeenIncluded=false
 hasPwdPolicyModuleBeenInstalled=false
 hasPwdPolicyOverlayBeenInstalled=false
 
+function startInitDBDaemon {
+  slapd_exe=$(command -v slapd)
+  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
+
+  slapd -u ldap -g ldap -h ldapi:///
+}
+
+function stopInitDBDaemon {
+  if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
+      echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
+      exit 1
+    else
+      slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+      echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
+      kill -s INT "$slapd_pid" || true
+      while : ; do
+        [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
+        sleep 1
+        echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
+      done
+      echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
+  fi
+}
+
 ######
 
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
@@ -124,10 +148,6 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
 
-  hasPwdPolicySchemaBeenIncluded=true
-  hasPwdPolicyModuleBeenInstalled=true
-  hasPwdPolicyOverlayBeenInstalled=true
-
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
   shopt -s globstar nullglob
@@ -138,10 +158,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   done
   shopt -u globstar nullglob
 
-  slapd_exe=$(command -v slapd)
-  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
-
-  slapd -u ldap -g ldap -h ldapi:///
+  startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
   if ! ldapsearch -x -b "$rootDN" > /dev/null
@@ -164,16 +181,12 @@ member: uid=${ADMIN_USERNAME},ou=People,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 member: cn=__dummy
 EOF
   fi
-fi
 
-if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-  slapd_exe=$(command -v slapd)
-  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
-
-  slapd -u ldap -g ldap -h ldapi:///
+  stopInitDBDaemon
 fi
 
 # does password entry already exists?
+startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
 if ! ldapsearch -x -b "$policyDN" > /dev/null
 then
@@ -182,21 +195,7 @@ then
 else
   echo "password policy is already installed; nothing to do here"
 fi
-
-if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-    echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
-    exit 1
-  else
-    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
-    echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
-    kill -s INT "$slapd_pid" || true
-    while : ; do
-      [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
-      sleep 1
-      echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
-    done
-    echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
-fi
+stopInitDBDaemon
 
 echo "update password change notification user"
 update_pwd_change_notification_user
