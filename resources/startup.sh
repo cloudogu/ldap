@@ -41,6 +41,30 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
+function startInitDBDaemon {
+  slapd_exe=$(command -v slapd)
+  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
+
+  slapd -u ldap -g ldap -h ldapi:///
+}
+
+function stopInitDBDaemon {
+  if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
+      echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
+      exit 1
+    else
+      slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+      echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
+      kill -s INT "$slapd_pid" || true
+      while : ; do
+        [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
+        sleep 1
+        echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
+      done
+      echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
+  fi
+}
+
 ######
 
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
@@ -130,15 +154,19 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   done
   shopt -u globstar nullglob
 
-  slapd_exe=$(command -v slapd)
-  echo >&2 "$0 ($slapd_exe): starting initdb daemon"
+  startInitDBDaemon
 
-  slapd -u ldap -g ldap -h ldapi:///
+  rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
+  if ! ldapsearch -x -b "$rootDN" > /dev/null
+  then
+    for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
+      echo >&2 "applying $f"
+      ldapadd -Y EXTERNAL -f "$f" 2>&1
+    done
+  else
+    echo "Root entry already exists; continue"
+  fi
 
-  for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
-    echo >&2 "applying $f"
-    ldapadd -Y EXTERNAL -f "$f" 2>&1
-  done
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
     ldapmodify -Y EXTERNAL << EOF
@@ -150,30 +178,20 @@ member: cn=__dummy
 EOF
   fi
 
-  if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-    echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
-    exit 1
-  else
-    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
-    echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
-    kill -s INT "$slapd_pid" || true
-    while : ; do
-      [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
-      sleep 1
-      echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
-    done
-    echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
-  fi
+  stopInitDBDaemon
 fi
 
-# Is password schema already included?
-PASSWORD_SCHEMA_FILE="${OPENLDAP_CONFIG_DIR}/cn=config/cn=schema/cn={4}ppolicy.ldif"
-if [[ ! -f "$PASSWORD_SCHEMA_FILE" ]]; then
+# does password entry already exists?
+startInitDBDaemon
+policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
+if ! ldapsearch -x -b "$policyDN" > /dev/null
+then
   echo "installing password policy"
   installPwdPolicy
 else
   echo "password policy is already installed; nothing to do here"
 fi
+stopInitDBDaemon
 
 echo "update password change notification user"
 update_pwd_change_notification_user
