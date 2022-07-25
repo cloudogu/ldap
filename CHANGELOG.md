@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v2.4.58-4] - 2022-07-25
 ### Fixed
 - After updating from version 2.4.48-3, the Dogu ran into an error the first time it was started and then restarted (#26)
 - After updating from version 2.4.48-3, the password policy was not available (#26)
