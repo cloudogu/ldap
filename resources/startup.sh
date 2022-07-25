@@ -41,10 +41,6 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 ulimit -n ${OPENLDAP_ULIMIT}
 
-hasPwdPolicySchemaBeenIncluded=false
-hasPwdPolicyModuleBeenInstalled=false
-hasPwdPolicyOverlayBeenInstalled=false
-
 function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
@@ -191,7 +187,7 @@ policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
 if ! ldapsearch -x -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
-  installPwdPolicy $hasPwdPolicySchemaBeenIncluded $hasPwdPolicyModuleBeenInstalled $hasPwdPolicyOverlayBeenInstalled
+  installPwdPolicy
 else
   echo "password policy is already installed; nothing to do here"
 fi
