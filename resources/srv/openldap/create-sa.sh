@@ -9,6 +9,7 @@
     SLAPD_IPC_SOCKET=/run/openldap/ldapi
     
     # escape url
+    # shellcheck disable=SC2001
     _escurl() { echo "$1" | sed 's|/|%2F|g' ;}
 
 
