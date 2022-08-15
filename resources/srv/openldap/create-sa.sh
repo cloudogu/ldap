@@ -9,8 +9,7 @@
     SLAPD_IPC_SOCKET=/run/openldap/ldapi
     
     # escape url
-    # shellcheck disable=SC1091
-    _escurl() { echo $1 | sed 's|/|%2F|g' ;}
+    _escurl() { echo "$1" | sed 's|/|%2F|g' ;}
 
 
     if [ X"${SERVICE}" = X"" ]; then
@@ -42,7 +41,7 @@
     ENC_PASSWORD=$(slappasswd -s "${PASSWORD}")
     export ENC_PASSWORD
     doguctl template /srv/openldap/new-user.ldif.tpl /srv/openldap/new-user_"${USERNAME}".ldif
-    ldapadd -H ldapi://$(_escurl ${SLAPD_IPC_SOCKET}) -f "/srv/openldap/new-user_${USERNAME}.ldif"
+    ldapadd -H ldapi://"$(_escurl ${SLAPD_IPC_SOCKET})" -f "/srv/openldap/new-user_${USERNAME}.ldif"
 
 } >/dev/null 2>&1
 

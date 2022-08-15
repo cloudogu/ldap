@@ -40,8 +40,7 @@ SLAPD_IPC_SOCKET_DIR=/run/openldap
 SLAPD_IPC_SOCKET=/run/openldap/ldapi
 
 # escape url
-# shellcheck disable=SC1091
-_escurl() { echo $1 | sed 's|/|%2F|g' ;}
+_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
 
 
 # proposal: use doguctl config openldap_suffix in future
@@ -206,5 +205,5 @@ update_email_sender_alias_mapping
 doguctl state ready
 
 echo "[DOGU] Starting ldap ..."
-/usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
+/usr/sbin/slapd -h 'ldap:/// ldapi://"$(_escurl ${SLAPD_IPC_SOCKET})"' -u ldap -g ldap -d "${LOGLEVEL}"
 
