@@ -36,30 +36,45 @@ export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
 export OPENLDAP_BACKEND_DATABASE="mdb"
 export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
+SLAPD_IPC_SOCKET_DIR=/run/openldap
+SLAPD_IPC_SOCKET=/run/openldap/ldapi
+
+# escape url
+_escurl() { echo $1 | sed 's|/|%2F|g' ;}
+
+
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
+
 # migration tmp folder
 export MIGRATION_TMP_DIR="/tmp/migration"
-
 ulimit -n ${OPENLDAP_ULIMIT}
 
-######
 
+# create openldap dir
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
 chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
+# create openldap socket dir
+if [[ ! -d ${SLAPD_IPC_SOCKET_DIR} ]]; then
+  mkdir -p ${SLAPD_IPC_SOCKET_DIR}
+fi
+
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
 # because ldapadd uses the default configuration which are not compatible with the backend
 echo "[DOGU] Removing old config files ..."
+
+
 # remove default configuration
 rm -f ${OPENLDAP_ETC_DIR}/*.conf
 
-echo "[DOGU] Get domain and root password ..."
+
 # get domain and root password
+echo "[DOGU] Get domain and root password ..."
 LDAP_ROOTPASS=$(doguctl random)
 LDAP_CONFIG_PASS=$(doguctl config -e -d "${LDAP_ROOTPASS}" rootpwd)
 LDAP_ROOTPASS_ENC=$(slappasswd -s "${LDAP_CONFIG_PASS}")
@@ -77,6 +92,7 @@ if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
   echo "[DOGU] Rendering slapd-config.ldif template ..."
   doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
 fi
+
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
@@ -169,6 +185,7 @@ EOF
   fi
 fi
 
+
 # For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
 if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
   start_migration
@@ -183,8 +200,10 @@ setup_cron
 echo "[DOGU] Update password change sender address mapping ..."
 update_email_sender_alias_mapping
 
+
 # set stage for health check
 doguctl state ready
 
 echo "[DOGU] Starting ldap ..."
-/usr/sbin/slapd -h ldap:/// -u ldap -g ldap -d "${LOGLEVEL}"
+/usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
+
