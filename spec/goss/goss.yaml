@@ -13,7 +13,7 @@ file:
     filetype: file
   /etc/openldap/slapd.d/cn=config:
     exists: true
-    mode: "0750"
+    mode: "0700"
     owner: ldap
     group: ldap
     filetype: directory
