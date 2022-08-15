@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade OpenLDAP to v2.6.2.-r0
 - Added conversion database format from old hdb to mdb format
 - Removed ppolicy schema due to deprecated status
+- slapd socket connections corrected
 
 ## [v2.4.58-3] - 2022-06-14
 ### Added

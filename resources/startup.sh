@@ -40,6 +40,7 @@ SLAPD_IPC_SOCKET_DIR=/run/openldap
 SLAPD_IPC_SOCKET=/run/openldap/ldapi
 
 # escape url
+# shellcheck disable=SC1091
 _escurl() { echo $1 | sed 's|/|%2F|g' ;}
 
 
