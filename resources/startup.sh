@@ -21,6 +21,9 @@ echo "                       'V/(/////////////////////////////V'      "
 source /migration.sh
 
 # shellcheck disable=SC1091
+source install-pwd-policy.sh
+
+# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -52,11 +55,25 @@ export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 export MIGRATION_TMP_DIR="/tmp/migration"
 ulimit -n ${OPENLDAP_ULIMIT}
 
+function waitForLdapHealth {
+  while true; do
+    echo "Waiting for ldap health..."
+    local EXIT_CODE
+    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" 2>&1 /dev/null; echo $?)"
+    if [[ "${EXIT_CODE}" == 32 ]]; then
+      break
+    fi
+    sleep 1
+  done
+  echo "Ldap is healthy..."
+}
+
 function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  /usr/sbin/slapd -h "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
+  /usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}" &
+  waitForLdapHealth
 }
 
 function stopInitDBDaemon {
@@ -118,6 +135,10 @@ if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
   doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
 fi
 
+# For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
+if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
+  start_migration
+fi
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
@@ -177,11 +198,11 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! ldapsearch -h "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$rootDN" > /dev/null
+  if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$rootDN" > /dev/null
   then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
-      ldapadd -h "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "$f" 2>&1
+      ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "$f" 2>&1
     done
   else
     echo "Root entry already exists; continue"
@@ -189,7 +210,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    ldapmodify -h "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" << EOF
+    ldapmodify -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" << EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -205,6 +226,7 @@ fi
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
+echo "Doing things"
 if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
@@ -213,12 +235,6 @@ else
   echo "password policy is already installed; nothing to do here"
 fi
 stopInitDBDaemon
-
-
-# For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
-if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
-  start_migration
-fi
 
 echo "[DOGU] Update password change notification user ..."
 update_pwd_change_notification_user
