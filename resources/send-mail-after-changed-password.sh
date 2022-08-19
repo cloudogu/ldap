@@ -6,6 +6,11 @@ set -o pipefail
 # shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
+# escape url
+# shellcheck disable=SC2001
+_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
+export SLAPD_IPC_SOCKET=/run/openldap/ldapi
+
 log_debug "##########"
 # Read start of the period from config file
 START_OF_THE_PERIOD_CONF_FILE=/send-mail-after-changed-password_starting-period
@@ -26,11 +31,11 @@ log_debug "Start the detection of changed user passwords since ${START_OF_THE_PE
 LDAP_DOMAIN="$(doguctl config --global domain)"
 OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
-LDAP_HOSTURI="ldap:///"
+LDAP_HOSTURI="ldapi://$(_escurl ${SLAPD_IPC_SOCKET})"
 LDAP_SEARCHBASE="ou=people,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
 LDAP_SEARCHFILTER="(&(uid=*)(objectClass=inetOrgPerson))"
 LDAP_SEARCH_BIN="/usr/bin/ldapsearch"
-ldap_param="-Y EXTERNAL -H ${LDAP_HOSTURI} -LLL -Q"
+ldap_param="-H ${LDAP_HOSTURI} -LLL -Q"
 
 # Relevant LDAP attributes of a user
 #   CN: Common name of the user
