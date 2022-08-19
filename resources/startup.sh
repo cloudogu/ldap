@@ -59,7 +59,7 @@ function waitForLdapHealth {
   while true; do
     echo "Waiting for ldap health..."
     local EXIT_CODE
-    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" 2>&1 /dev/null; echo $?)"
+    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" > /dev/null 2>&1; echo $?)"
     if [[ "${EXIT_CODE}" == 32 ]]; then
       break
     fi
