@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed ppolicy schema due to deprecated status
 - slapd socket connections corrected
 
+## [v2.4.58-4] - 2022-07-25
+### Fixed
+- After updating from version 2.4.48-3, the Dogu ran into an error the first time it was started and then restarted (#26)
+- After updating from version 2.4.48-3, the password policy was not available (#26)
+
 ## [v2.4.58-3] - 2022-06-14
 ### Added
 - an e-mail notification whenever a users password has been changed by anyone (#21)
