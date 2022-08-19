@@ -211,11 +211,12 @@ then
   installPwdPolicy
 else
   echo "password policy is already installed; nothing to do here"
-
+fi
 
 # For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
 if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
   start_migration
+fi
 
 echo "[DOGU] Update password change notification user ..."
 update_pwd_change_notification_user
