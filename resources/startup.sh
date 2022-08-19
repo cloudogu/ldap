@@ -205,13 +205,15 @@ fi
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-if ! ldapsearch -x -b "$policyDN" > /dev/null
+if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
   installPwdPolicy
 else
   echo "password policy is already installed; nothing to do here"
 fi
+stopInitDBDaemon
+
 
 # For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
 if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
