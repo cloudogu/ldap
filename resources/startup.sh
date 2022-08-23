@@ -18,6 +18,9 @@ echo "                       'V/(/////////////////////////////V'      "
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 # shellcheck disable=SC1091
+source /migration.sh
+
+# shellcheck disable=SC1091
 source install-pwd-policy.sh
 
 # shellcheck disable=SC1091
@@ -33,19 +36,44 @@ export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
 export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
 export OPENLDAP_CONFIG_DIR="${OPENLDAP_ETC_DIR}/slapd.d"
 export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
-export OPENLDAP_BACKEND_DATABASE="hdb"
-export OPENLDAP_BACKEND_OBJECTCLASS="olcHdbConfig"
+export OPENLDAP_BACKEND_DATABASE="mdb"
+export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
+export SLAPD_IPC_SOCKET_DIR=/run/openldap
+export SLAPD_IPC_SOCKET=/run/openldap/ldapi
+
+# escape url
+# shellcheck disable=SC2001
+_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
+
+
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
+
+# migration tmp folder
+export MIGRATION_TMP_DIR="/tmp/migration"
 ulimit -n ${OPENLDAP_ULIMIT}
+
+function waitForLdapHealth {
+  while true; do
+    echo "Waiting for ldap health..."
+    local EXIT_CODE
+    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" > /dev/null 2>&1; echo $?)"
+    if [[ "${EXIT_CODE}" == 32 ]]; then
+      break
+    fi
+    sleep 1
+  done
+  echo "Ldap is healthy..."
+}
 
 function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  slapd -u ldap -g ldap -h ldapi:///
+  /usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}" &
+  waitForLdapHealth
 }
 
 function stopInitDBDaemon {
@@ -65,22 +93,30 @@ function stopInitDBDaemon {
   fi
 }
 
-######
 
+# create openldap dir
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
 chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
+# create openldap socket dir
+if [[ ! -d ${SLAPD_IPC_SOCKET_DIR} ]]; then
+  mkdir -p ${SLAPD_IPC_SOCKET_DIR}
+fi
+
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
 # because ldapadd uses the default configuration which are not compatible with the backend
-echo "removing old config files"
+echo "[DOGU] Removing old config files ..."
+
+
 # remove default configuration
 rm -f ${OPENLDAP_ETC_DIR}/*.conf
 
-echo "get domain and root password"
+
 # get domain and root password
+echo "[DOGU] Get domain and root password ..."
 LDAP_ROOTPASS=$(doguctl random)
 LDAP_CONFIG_PASS=$(doguctl config -e -d "${LDAP_ROOTPASS}" rootpwd)
 LDAP_ROOTPASS_ENC=$(slappasswd -s "${LDAP_CONFIG_PASS}")
@@ -90,27 +126,32 @@ LDAP_DOMAIN=$(doguctl config --global domain)
 export LDAP_DOMAIN
 
 if [[ ! -s ${OPENLDAP_ETC_DIR}/ldap.conf ]]; then
-  echo "rendering ldap.conf template"
+  echo "[DOGU] Rendering ldap.conf template ..."
   doguctl template /srv/openldap/conf.d/ldap.conf.tpl ${OPENLDAP_ETC_DIR}/ldap.conf
 fi
 
 if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
-  echo "rendering slapd-config.ldif template"
+  echo "[DOGU] Rendering slapd-config.ldif template ..."
   doguctl template /srv/openldap/conf.d/slapd-config.ldif.tpl ${OPENLDAP_ETC_DIR}/slapd-config.ldif
+fi
+
+# For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
+if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
+  start_migration
 fi
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
-  echo "initializing ldap"
+  echo "[DOGU] Initializing ldap ..."
 
   # set stage for health check
   doguctl state installing
 
-  echo "get admin user details"
+  echo "[DOGU] Get admin user details ..."
   ADMIN_USERNAME=$(doguctl config -d admin admin_username)
   export ADMIN_USERNAME
 
-  echo "get manager and admin group name"
+  echo "[DOGU] Get manager and admin group name ..."
   MANAGER_GROUP=$(doguctl config --global -d cesManager manager_group)
   export MANAGER_GROUP
 
@@ -132,7 +173,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   ADMIN_MAIL=$(doguctl config -d "${DEFAULT_ADMIN_MAIL}" admin_mail)
   export ADMIN_MAIL
 
-  echo "get admin password"
+  echo "[DOGU] Get admin password ..."
   # TODO remove from etcd ???
   ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
   ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
@@ -157,11 +198,11 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! ldapsearch -x -b "$rootDN" > /dev/null
+  if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$rootDN" > /dev/null
   then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
-      ldapadd -Y EXTERNAL -f "$f" 2>&1
+      ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "$f" 2>&1
     done
   else
     echo "Root entry already exists; continue"
@@ -169,7 +210,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    ldapmodify -Y EXTERNAL << EOF
+    ldapmodify -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" << EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -181,10 +222,12 @@ EOF
   stopInitDBDaemon
 fi
 
+
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-if ! ldapsearch -x -b "$policyDN" > /dev/null
+echo "Doing things"
+if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
   installPwdPolicy
@@ -193,17 +236,20 @@ else
 fi
 stopInitDBDaemon
 
-echo "update password change notification user"
+echo "[DOGU] Update password change notification user ..."
 update_pwd_change_notification_user
 
-echo "setup cron job"
+echo "[DOGU] Setup cron job ..."
 setup_cron
 
-echo "update password change sender address mapping"
+echo "[DOGU] Update password change sender address mapping ..."
 update_email_sender_alias_mapping
+
 
 # set stage for health check
 doguctl state ready
 
-echo "Starting ldap..."
-/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"
+echo "[DOGU] Starting ldap ..."
+
+/usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
+

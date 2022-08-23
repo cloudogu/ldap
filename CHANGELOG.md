@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Upgrade base image to 3.15.3-1
+- Upgrade OpenLDAP to v2.6.2.-r0
+- Added conversion database format from old hdb to mdb format
+- Removed ppolicy schema due to deprecated status
+- slapd socket connections corrected
+
 ## [v2.4.58-4] - 2022-07-25
 ### Fixed
 - After updating from version 2.4.48-3, the Dogu ran into an error the first time it was started and then restarted (#26)

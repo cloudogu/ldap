@@ -13,27 +13,15 @@ file:
     filetype: file
   /etc/openldap/slapd.d/cn=config:
     exists: true
-    mode: "0750"
+    mode: "0700"
     owner: ldap
     group: ldap
     filetype: directory
-  /etc/openldap/slapd.d/cn=config/cn=schema/cn={4}ppolicy.ldif:
-    exists: true
-    mode: "0600"
-    owner: ldap
-    group: ldap
-    filetype: file
-  /var/lib/openldap/DB_CONFIG:
-    exists: true
-    mode: "0644"
-    owner: root
-    group: root
-    filetype: file
 
 package:
   openldap:
     installed: true
-  openldap-back-hdb:
+  openldap-back-mdb:
     installed: true
   openldap-clients:
     installed: true

@@ -3,6 +3,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+export SLAPD_IPC_SOCKET=/run/openldap/ldapi
+
+# escape url
+# shellcheck disable=SC2001
+_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
+
 function installPwdPolicy() {
   # set stage for health check
   doguctl state installing
@@ -17,21 +23,11 @@ function installPwdPolicy() {
   if [ "$existsPasswordPolicyConfiguration" != true ]; then
     # start installation and configuration of password policy
     echo "include password policy schema"
-    ldapadd -Y EXTERNAL -H ldapi:/// -f "${OPENLDAP_ETC_DIR}"/schema/ppolicy.ldif
-  fi
-
-  if [ "$existsPasswordPolicyConfiguration" != true ]; then
-    echo "install password policy module"
-    ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
-dn: cn=module{0},cn=config
-changetype: modify
-add: olcModuleLoad
-olcModuleLoad: ppolicy
-EOF
+    ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "${OPENLDAP_ETC_DIR}"/schema/ppolicy.ldif
   fi
 
   echo "add organizational unit (ou) for policies"
-  ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
+  ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" <<EOF
 dn: ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: organizationalUnit
 objectClass: top
@@ -41,7 +37,7 @@ EOF
 
   if [ "$existsPasswordPolicyConfiguration" != true ]; then
   echo "add password policy overlay"
-  ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
+  ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" <<EOF
 dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
@@ -52,7 +48,7 @@ EOF
   fi
 
   echo "add default password policy"
-  ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
+  ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" <<EOF
 dn: cn=default,ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: person
 objectClass: pwdPolicy
