@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-1] - 2022-08-23
+
 ### Changed
 - Upgrade base image to 3.15.3-1
 - Upgrade OpenLDAP to v2.6.2.-r0
