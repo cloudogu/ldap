@@ -6,7 +6,7 @@
 # This file should be world readable but not world writable.
 
 #BASE   {{.Env.Get "OPENLDAP_SUFFIX" }}
-URI    ldapi://
+URI    ldap://
 
 #SIZELIMIT  12
 #TIMELIMIT  15
