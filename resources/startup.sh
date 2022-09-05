@@ -28,6 +28,8 @@ source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
+_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
+
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
@@ -42,14 +44,8 @@ OPENLDAP_ULIMIT="2048"
 export SLAPD_IPC_SOCKET_DIR=/run/openldap
 export SLAPD_IPC_SOCKET=/run/openldap/ldapi
 
-# escape url
-# shellcheck disable=SC2001
-_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
-
-
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-
 
 # migration tmp folder
 export MIGRATION_TMP_DIR="/tmp/migration"
@@ -59,7 +55,7 @@ function waitForLdapHealth {
   while true; do
     echo "Waiting for ldap health..."
     local EXIT_CODE
-    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" > /dev/null 2>&1; echo $?)"
+    EXIT_CODE="$(_ldapsearch > /dev/null 2>&1; echo $?)"
     if [[ "${EXIT_CODE}" == 32 ]]; then
       break
     fi
@@ -198,11 +194,11 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$rootDN" > /dev/null
+  if ! _ldapsearch -b "$rootDN" > /dev/null
   then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
-      ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "$f" 2>&1
+      _ldapadd -f "$f" 2>&1
     done
   else
     echo "Root entry already exists; continue"
@@ -210,7 +206,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    ldapmodify -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" << EOF
+    _ldapmodify << EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -226,8 +222,7 @@ fi
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-echo "Doing things"
-if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$policyDN" > /dev/null
+if ! _ldapsearch -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
   installPwdPolicy
