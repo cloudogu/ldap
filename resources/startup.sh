@@ -28,8 +28,6 @@ source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
-_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
-
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"

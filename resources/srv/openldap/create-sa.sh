@@ -6,13 +6,6 @@
     TYPE="$1"
     SERVICE="$2"
 
-    SLAPD_IPC_SOCKET=/run/openldap/ldapi
-    
-    # escape url
-    # shellcheck disable=SC2001
-    _escurl() { echo "$1" | sed 's|/|%2F|g' ;}
-
-
     if [ X"${SERVICE}" = X"" ]; then
         SERVICE="${TYPE}"
         TYPE=""
