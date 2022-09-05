@@ -41,8 +41,6 @@ export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
 export OPENLDAP_BACKEND_DATABASE="mdb"
 export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
-export SLAPD_IPC_SOCKET_DIR=/run/openldap
-export SLAPD_IPC_SOCKET=/run/openldap/ldapi
 
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
@@ -55,7 +53,7 @@ function waitForLdapHealth {
   while true; do
     echo "Waiting for ldap health..."
     local EXIT_CODE
-    EXIT_CODE="$(_ldapsearch > /dev/null 2>&1; echo $?)"
+    EXIT_CODE="$(ldapsearch > /dev/null 2>&1; echo $?)"
     if [[ "${EXIT_CODE}" == 32 ]]; then
       break
     fi
@@ -68,8 +66,8 @@ function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  /usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}" &
-  waitForLdapHealth
+  slapd -u ldap -g ldap -h ldapi:///
+    waitForLdapHealth
 }
 
 function stopInitDBDaemon {
@@ -95,11 +93,6 @@ if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
 chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
-
-# create openldap socket dir
-if [[ ! -d ${SLAPD_IPC_SOCKET_DIR} ]]; then
-  mkdir -p ${SLAPD_IPC_SOCKET_DIR}
-fi
 
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
@@ -194,11 +187,11 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! _ldapsearch -b "$rootDN" > /dev/null
+  if ! ldapsearch -b "$rootDN" > /dev/null
   then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
-      _ldapadd -f "$f" 2>&1
+      ldapadd -f "$f" 2>&1
     done
   else
     echo "Root entry already exists; continue"
@@ -206,7 +199,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    _ldapmodify << EOF
+    ldapmodify << EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -222,7 +215,7 @@ fi
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-if ! _ldapsearch -b "$policyDN" > /dev/null
+if ! ldapsearch -b "$policyDN" > /dev/null
 then
   echo "installing password policy"
   installPwdPolicy
@@ -240,11 +233,8 @@ setup_cron
 echo "[DOGU] Update password change sender address mapping ..."
 update_email_sender_alias_mapping
 
-
 # set stage for health check
 doguctl state ready
 
-echo "[DOGU] Starting ldap ..."
-
-/usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
-
+echo "Starting ldap..."
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

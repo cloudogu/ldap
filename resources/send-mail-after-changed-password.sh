@@ -28,7 +28,7 @@ OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 
 LDAP_SEARCHBASE="ou=people,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
 LDAP_SEARCHFILTER="(&(uid=*)(objectClass=inetOrgPerson))"
-LDAP_SEARCH_BIN="/usr/bin/_ldapsearch"
+LDAP_SEARCH_BIN="/usr/bin/ldapsearch"
 ldap_param="-LLL -Q"
 
 # Relevant LDAP attributes of a user

@@ -8,7 +8,7 @@ function installPwdPolicy() {
   doguctl state installing
 
   echo "add organizational unit (ou) for policies"
-  _ldapadd <<EOF
+  ldapadd <<EOF
 dn: ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: organizationalUnit
 objectClass: top
@@ -17,7 +17,7 @@ ou: Policies
 EOF
 
   echo "add default password policy"
-  _ldapadd <<EOF
+  ldapadd <<EOF
 dn: cn=default,ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 objectClass: person
 objectClass: pwdPolicy

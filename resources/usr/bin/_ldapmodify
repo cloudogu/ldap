@@ -1,6 +1,0 @@
-#!/bin/bash
-
-_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
-export SLAPD_IPC_SOCKET="/run/openldap/ldapi"
-
-ldapmodify -H "ldapi://$(_escurl "${SLAPD_IPC_SOCKET}")" "$@"

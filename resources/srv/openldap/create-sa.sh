@@ -42,7 +42,7 @@
     ENC_PASSWORD=$(slappasswd -s "${PASSWORD}")
     export ENC_PASSWORD
     doguctl template /srv/openldap/new-user.ldif.tpl /srv/openldap/new-user_"${USERNAME}".ldif
-    _ldapadd -f "/srv/openldap/new-user_${USERNAME}.ldif"
+    ldapadd -f "/srv/openldap/new-user_${USERNAME}.ldif"
 
 } >/dev/null 2>&1
 
