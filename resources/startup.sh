@@ -31,6 +31,7 @@ LOGLEVEL=${LOGLEVEL:-0}
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
+OPENLDAP_SOCKET_DIR="/var/lib/openldap/run"
 export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
 export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
 export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
@@ -51,7 +52,10 @@ function waitForLdapHealth {
   while true; do
     echo "Waiting for ldap health..."
     local EXIT_CODE
-    EXIT_CODE="$(ldapsearch > /dev/null 2>&1; echo $?)"
+    EXIT_CODE="$(
+      ldapsearch >/dev/null 2>&1
+      echo $?
+    )"
     if [[ "${EXIT_CODE}" == 32 ]]; then
       break
     fi
@@ -64,27 +68,33 @@ function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  slapd -u ldap -g ldap -h ldapi:///
-    waitForLdapHealth
+    # create openldap dir
+  if [[ ! -d ${OPENLDAP_SOCKET_DIR} ]]; then
+    echo "Creating ldap socket dir"
+    mkdir -p ${OPENLDAP_SOCKET_DIR}
+  fi
+  chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+
+  /usr/sbin/slapd -h ldapi:/// -u ldap -g ldap
+  waitForLdapHealth
 }
 
 function stopInitDBDaemon {
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-      echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
-      exit 1
-    else
-      slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
-      echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
-      kill -s INT "$slapd_pid" || true
-      while : ; do
-        [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
-        sleep 1
-        echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
-      done
-      echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
+    echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
+    exit 1
+  else
+    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+    echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
+    kill -s INT "$slapd_pid" || true
+    while :; do
+      [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
+      sleep 1
+      echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
+    done
+    echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
   fi
 }
-
 
 # create openldap dir
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
@@ -97,10 +107,8 @@ chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 # because ldapadd uses the default configuration which are not compatible with the backend
 echo "[DOGU] Removing old config files ..."
 
-
 # remove default configuration
 rm -f ${OPENLDAP_ETC_DIR}/*.conf
-
 
 # get domain and root password
 echo "[DOGU] Get domain and root password ..."
@@ -168,16 +176,15 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
-  slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
+  slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
   shopt -s globstar nullglob
-  for file in /srv/openldap/ldif.d/*.tpl
-  do
-   # render template for all .tpl files and create files without .tpl ending
+  for file in /srv/openldap/ldif.d/*.tpl; do
+    # render template for all .tpl files and create files without .tpl ending
     doguctl template "$file" "${file//".tpl"/""}"
   done
   shopt -u globstar nullglob
@@ -185,8 +192,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! ldapsearch -b "$rootDN" > /dev/null
-  then
+  if ! ldapsearch -b "$rootDN" >/dev/null; then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
       ldapadd -f "$f" 2>&1
@@ -197,7 +203,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    ldapmodify << EOF
+    ldapmodify <<EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -209,12 +215,10 @@ EOF
   stopInitDBDaemon
 fi
 
-
 # does password entry already exists?
 startInitDBDaemon
 policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-if ! ldapsearch -b "$policyDN" > /dev/null
-then
+if ! ldapsearch -b "$policyDN" >/dev/null; then
   echo "installing password policy"
   installPwdPolicy
 else
