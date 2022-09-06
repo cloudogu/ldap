@@ -234,5 +234,8 @@ update_email_sender_alias_mapping
 # set stage for health check
 doguctl state ready
 
+# Make sure permissions are correct
+chmod -R 700 "${OPENLDAP_CONFIG_DIR}"
+
 echo "Starting ldap..."
 /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"
