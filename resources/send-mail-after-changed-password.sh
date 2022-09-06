@@ -63,7 +63,7 @@ mkdir ${tmp_dir}
 
 # Determine all relevant LDAP entries and write them to a file.
 # Of the entries, only the "dn" (distinguish name) is returned.
-${LDAP_SEARCH_BIN} ${ldap_param} -b "${LDAP_SEARCHBASE}" "${LDAP_SEARCHFILTER}" "dn" | grep -iE '^dn:' \
+${LDAP_SEARCH_BIN} "${ldap_param}" -b "${LDAP_SEARCHBASE}" "${LDAP_SEARCHFILTER}" "dn" | grep -iE '^dn:' \
 > ${result_file}
 
 # Iterate over all entries found (=lines in file)
@@ -77,7 +77,7 @@ while read -r dnStr; do
   dn="$(echo "${dnStr}" | cut -d : -f 2)"
 
   # Read the dn (distinguish name) cn (common name), uid (user ID), e-mail address and password change date and write them to a file.
-  ${LDAP_SEARCH_BIN} ${ldap_param} -b "${dn}" \
+  ${LDAP_SEARCH_BIN} "${ldap_param}" -b "${dn}" \
   ${LDAP_CN_ATTR} ${LDAP_UID_ATTR} ${LDAP_MAIL_ATTR} pwdChangedTime \
   > ${buffer_file}
 
