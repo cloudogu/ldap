@@ -26,7 +26,7 @@ function run_preupgrade() {
   doguctl state "upgrading"
 
   if [[ "$(versionXLessOrEqualThanY "${FROM_VERSION}" "2.4.58-3"; echo $?)" == "0" ]]; then
-    echo "Detected upgrade from <= 2.4.58-3: migrating from mdb to hdb"
+    echo "Detected upgrade from <= 2.4.58-3: migrating from hdb to mbd"
 
     # exporting old config and data
     start_export
