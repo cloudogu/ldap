@@ -25,6 +25,13 @@ function run_preupgrade() {
   echo "Set registry flag so startup script waits for post-upgrade to finish..."
   doguctl state "upgrading"
 
+  if [[ "$(versionXLessOrEqualThanY "${FROM_VERSION}" "2.4.58-3"; echo $?)" == "0" ]]; then
+    echo "Detected upgrade from <= 2.4.58-3: migrating from mdb to hdb"
+
+    # exporting old config and data
+    start_export
+  fi
+
   doguctl config "startup/setup_done" "true"
 
   echo "LDAP pre-upgrade done"
@@ -41,14 +48,14 @@ function versionXLessOrEqualThanY() {
 
   declare -r semVerRegex='([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)'
 
-   sourceMajor=0
-   sourceMinor=0
-   sourceBugfix=0
-   sourceDogu=0
-   targetMajor=0
-   targetMinor=0
-   targetBugfix=0
-   targetDogu=0
+  sourceMajor=0
+  sourceMinor=0
+  sourceBugfix=0
+  sourceDogu=0
+  targetMajor=0
+  targetMinor=0
+  targetBugfix=0
+  targetDogu=0
 
   if [[ ${sourceVersion} =~ ${semVerRegex} ]]; then
     sourceMajor=${BASH_REMATCH[1]}
@@ -70,30 +77,31 @@ function versionXLessOrEqualThanY() {
     exit 1
   fi
 
-  if [[ $((sourceMajor)) -lt $((targetMajor)) ]] ; then
-    return 0;
+  if [[ $((sourceMajor)) -lt $((targetMajor)) ]]; then
+    return 0
   fi
-  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -lt $((targetMinor)) ]] ; then
-    return 0;
+  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -lt $((targetMinor)) ]]; then
+    return 0
   fi
-  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -le $((targetMinor)) && $((sourceBugfix)) -lt $((targetBugfix)) ]] ; then
-    return 0;
+  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -le $((targetMinor)) && $((sourceBugfix)) -lt $((targetBugfix)) ]]; then
+    return 0
   fi
-  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -le $((targetMinor)) && $((sourceBugfix)) -le $((targetBugfix)) && $((sourceDogu)) -lt $((targetDogu)) ]] ; then
-    return 0;
+  if [[ $((sourceMajor)) -le $((targetMajor)) && $((sourceMinor)) -le $((targetMinor)) && $((sourceBugfix)) -le $((targetBugfix)) && $((sourceDogu)) -lt $((targetDogu)) ]]; then
+    return 0
   fi
 
   return 1
 }
 
-function start_export () {
+function start_export() {
   # Creating dump
   echo "[DOGU] exporting DB ..."
   slapcat -n 0 -l ${MIGRATION_TMP_DIR}/config.ldif
   slapcat -n 1 -l ${MIGRATION_TMP_DIR}/data.ldif
-  touch /etc/openldap/slapd.d/start_migration
-  cp ${MIGRATION_TMP_DIR}/config.ldif /etc/openldap/slapd.d
-  cp ${MIGRATION_TMP_DIR}/data.ldif /etc/openldap/slapd.d
+  mkdir -p /var/lib/openldap/migration
+  cp ${MIGRATION_TMP_DIR}/config.ldif /var/lib/openldap/migration
+  cp ${MIGRATION_TMP_DIR}/data.ldif /var/lib/openldap/migration
+  doguctl config migration_mdb_hdb "true"
 }
 
 # versionXLessThanY returns true if X is less than Y; otherwise false
@@ -104,13 +112,7 @@ function versionXLessThanY() {
   versionXLessOrEqualThanY "${1}" "${2}"
 }
 
-
 # make the script only run when executed, not when sourced from bats tests
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_preupgrade "$@"
 fi
-
-# exporting old config and data
-start_export
-
-

@@ -18,9 +18,6 @@ echo "                       'V/(/////////////////////////////V'      "
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 # shellcheck disable=SC1091
-source /migration.sh
-
-# shellcheck disable=SC1091
 source install-pwd-policy.sh
 
 # shellcheck disable=SC1091
@@ -68,7 +65,7 @@ function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-    # create openldap dir
+  # create openldap dir
   if [[ ! -d ${OPENLDAP_SOCKET_DIR} ]]; then
     echo "Creating ldap socket dir"
     mkdir -p ${OPENLDAP_SOCKET_DIR}
@@ -131,9 +128,12 @@ if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
 fi
 
 # For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
-if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
-  start_migration
-fi
+MIGRATION_IN_PROGRESS="$(doguctl config --default "false" migration_mdb_hdb)"
+while [[ "${MIGRATION_IN_PROGRESS}" == "true" ]]; do
+  echo "Migration from mdb to hdb in progress..."
+  sleep 1
+  MIGRATION_IN_PROGRESS="$(doguctl config --default "false" migration_mdb_hdb)"
+done
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
