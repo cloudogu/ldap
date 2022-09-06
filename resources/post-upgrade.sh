@@ -38,6 +38,7 @@ function start_migration() {
   chown -R ldap:ldap /var/lib/openldap
 
   doguctl config --rm migration_mdb_hdb
+  rm -rf "${MIGRATION_TMP_DIR}"
 }
 
 function run_postupgrade() {

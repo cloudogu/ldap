@@ -217,13 +217,9 @@ fi
 
 # does password entry already exists?
 startInitDBDaemon
-policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-if ! ldapsearch -b "$policyDN" >/dev/null; then
-  echo "installing password policy"
-  installPwdPolicy
-else
-  echo "password policy is already installed; nothing to do here"
-fi
+
+installPwdPolicyIfNecessary
+
 stopInitDBDaemon
 
 echo "[DOGU] Update password change notification user ..."
