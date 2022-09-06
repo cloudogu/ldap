@@ -24,6 +24,7 @@ function start_migration() {
   sed -i '/dn: cn={4}ppolicy/,/^$/d' "${MIGRATION_TMP_DIR}"/config.ldif
 
   echo "[DOGU] Cleanup config and db folders ..."
+  rm -rf /etc/openldap/slapd.d/*
   rm -rf /var/lib/openldap/*
 
   echo "[DOGU] Importing dump ..."
