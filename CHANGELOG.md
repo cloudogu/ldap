@@ -6,7 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Make sure socket path exists and use default socket path for ldap connections at dogu startup as it was before 2.6.2-1
+
+### Fixed
+- Fixed hard to repair state of ldap dogu when upgrading from 2.4.48-3 => 2.4.58-3 => 2.6.2-x (#29)
+- Make sure that all parts of the password policy are installed correctly at each startup (#29)
+
 ## [v2.6.2-1] - 2022-08-23
+
+**THIS VERSION HAS BEEN REMOVED FROM REGISTRY. IT MAY CAUSES ERRORS THAT ARE HARD TO FIX**
 
 ### Changed
 - Upgrade base image to 3.15.3-1
