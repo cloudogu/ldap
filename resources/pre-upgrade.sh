@@ -25,7 +25,7 @@ function run_preupgrade() {
   echo "Set registry flag so startup script waits for post-upgrade to finish..."
   doguctl state "upgrading"
 
-  if [[ "$(versionXLessOrEqualThanY "${FROM_VERSION}" "2.4.58-4"; echo $?)" == "0" ]]; then
+  if [[ "$(versionXLessOrEqualThanY "${FROM_VERSION}" "2.6.2-0"; echo $?)" == "0" ]]; then
     echo "Detected upgrade from <= 2.4.58-3: migrating from hdb to mbd"
 
     # exporting old config and data
