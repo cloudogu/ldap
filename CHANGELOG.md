@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-2] - 2022-09-08
+
 ### Changed
 - Make sure socket path exists and use default socket path for ldap connections at dogu startup as it was before 2.6.2-1
 - Move migration logic from startup script to `post-upgrade.sh`
