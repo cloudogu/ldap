@@ -1,6 +1,6 @@
 {
   "Name": "official/ldap",
-  "Version": "2.6.2-1",
+  "Version": "2.6.2-2",
   "DisplayName": "OpenLDAP",
   "Description": "OpenLDAP server for user and group management.",
   "Url": "http://www.openldap.org",
@@ -128,6 +128,10 @@
     {
       "Name": "pre-upgrade",
       "Command": "/pre-upgrade.sh"
+    },
+    {
+      "Name": "post-upgrade",
+      "Command": "/post-upgrade.sh"
     }
   ],
   "HealthChecks": [

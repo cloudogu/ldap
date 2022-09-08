@@ -18,9 +18,6 @@ echo "                       'V/(/////////////////////////////V'      "
 # based on https://github.com/dweomer/dockerfiles-openldap/blob/master/openldap.sh
 
 # shellcheck disable=SC1091
-source /migration.sh
-
-# shellcheck disable=SC1091
 source install-pwd-policy.sh
 
 # shellcheck disable=SC1091
@@ -31,6 +28,7 @@ LOGLEVEL=${LOGLEVEL:-0}
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
+OPENLDAP_SOCKET_DIR="/var/lib/openldap/run"
 export OPENLDAP_RUN_ARGSFILE="${OPENLDAP_RUN_DIR}/slapd.args"
 export OPENLDAP_RUN_PIDFILE="${OPENLDAP_RUN_DIR}/slapd.pid"
 export OPENLDAP_MODULES_DIR="/usr/lib/openldap"
@@ -39,17 +37,9 @@ export OPENLDAP_BACKEND_DIR="/var/lib/openldap"
 export OPENLDAP_BACKEND_DATABASE="mdb"
 export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
-export SLAPD_IPC_SOCKET_DIR=/run/openldap
-export SLAPD_IPC_SOCKET=/run/openldap/ldapi
-
-# escape url
-# shellcheck disable=SC2001
-_escurl() { echo "$1" | sed 's|/|%2F|g' ;}
-
 
 # proposal: use doguctl config openldap_suffix in future
 export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-
 
 # migration tmp folder
 export MIGRATION_TMP_DIR="/tmp/migration"
@@ -59,7 +49,10 @@ function waitForLdapHealth {
   while true; do
     echo "Waiting for ldap health..."
     local EXIT_CODE
-    EXIT_CODE="$(ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" > /dev/null 2>&1; echo $?)"
+    EXIT_CODE="$(
+      ldapsearch >/dev/null 2>&1
+      echo $?
+    )"
     if [[ "${EXIT_CODE}" == 32 ]]; then
       break
     fi
@@ -72,27 +65,33 @@ function startInitDBDaemon {
   slapd_exe=$(command -v slapd)
   echo >&2 "$0 ($slapd_exe): starting initdb daemon"
 
-  /usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}" &
+  # create openldap dir
+  if [[ ! -d ${OPENLDAP_SOCKET_DIR} ]]; then
+    echo "Creating ldap socket dir"
+    mkdir -p ${OPENLDAP_SOCKET_DIR}
+  fi
+  chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+
+  /usr/sbin/slapd -h ldapi:/// -u ldap -g ldap
   waitForLdapHealth
 }
 
 function stopInitDBDaemon {
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
-      echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
-      exit 1
-    else
-      slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
-      echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
-      kill -s INT "$slapd_pid" || true
-      while : ; do
-        [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
-        sleep 1
-        echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
-      done
-      echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
+    echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
+    exit 1
+  else
+    slapd_pid=$(cat ${OPENLDAP_RUN_PIDFILE})
+    echo >&2 "$0 ($slapd_exe): sending SIGINT to initdb daemon with pid=$slapd_pid"
+    kill -s INT "$slapd_pid" || true
+    while :; do
+      [[ ! -f ${OPENLDAP_RUN_PIDFILE} ]] && break
+      sleep 1
+      echo >&2 "$0 ($slapd_exe): initdb daemon is still up, sleeping ..."
+    done
+    echo >&2 "$0 ($slapd_exe): initdb daemon stopped"
   fi
 }
-
 
 # create openldap dir
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
@@ -100,20 +99,13 @@ if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
 fi
 chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 
-# create openldap socket dir
-if [[ ! -d ${SLAPD_IPC_SOCKET_DIR} ]]; then
-  mkdir -p ${SLAPD_IPC_SOCKET_DIR}
-fi
-
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
 # because ldapadd uses the default configuration which are not compatible with the backend
 echo "[DOGU] Removing old config files ..."
 
-
 # remove default configuration
 rm -f ${OPENLDAP_ETC_DIR}/*.conf
-
 
 # get domain and root password
 echo "[DOGU] Get domain and root password ..."
@@ -136,9 +128,12 @@ if [[ ! -s ${OPENLDAP_ETC_DIR}/slapd-config.ldif ]]; then
 fi
 
 # For Migration only 2.4.X -> 2.6.X. Cloud be removed in further upgrades!
-if [[ -f /etc/openldap/slapd.d/start_migration ]]; then
-  start_migration
-fi
+MIGRATION_IN_PROGRESS="$(doguctl config --default "false" migration_mdb_hdb)"
+while [[ "${MIGRATION_IN_PROGRESS}" == "true" ]]; do
+  echo "Migration from mdb to hdb in progress..."
+  sleep 1
+  MIGRATION_IN_PROGRESS="$(doguctl config --default "false" migration_mdb_hdb)"
+done
 
 # LDAP ALREADY INITIALIZED?
 if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
@@ -181,16 +176,15 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   mkdir -p ${OPENLDAP_CONFIG_DIR}
 
-  slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif > ${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
+  slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
   chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
   shopt -s globstar nullglob
-  for file in /srv/openldap/ldif.d/*.tpl
-  do
-   # render template for all .tpl files and create files without .tpl ending
+  for file in /srv/openldap/ldif.d/*.tpl; do
+    # render template for all .tpl files and create files without .tpl ending
     doguctl template "$file" "${file//".tpl"/""}"
   done
   shopt -u globstar nullglob
@@ -198,11 +192,10 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   startInitDBDaemon
 
   rootDN="o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-  if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$rootDN" > /dev/null
-  then
+  if ! ldapsearch -b "$rootDN" >/dev/null; then
     for f in $(find /srv/openldap/ldif.d -type f -name "*.ldif" | sort); do
       echo >&2 "applying $f"
-      ldapadd -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -f "$f" 2>&1
+      ldapadd -f "$f" 2>&1
     done
   else
     echo "Root entry already exists; continue"
@@ -210,7 +203,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   # if ADMIN_MEMBER is true add admin to member group for tool admin rights
   if [[ ${ADMIN_MEMBER} = "true" ]]; then
-    ldapmodify -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" << EOF
+    ldapmodify <<EOF
 dn: cn=${ADMIN_GROUP},ou=Groups,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
 changetype: modify
 replace: member
@@ -222,18 +215,11 @@ EOF
   stopInitDBDaemon
 fi
 
-
 # does password entry already exists?
 startInitDBDaemon
-policyDN="ou=Policies,o=$LDAP_DOMAIN,$OPENLDAP_SUFFIX"
-echo "Doing things"
-if ! ldapsearch -H "ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -b "$policyDN" > /dev/null
-then
-  echo "installing password policy"
-  installPwdPolicy
-else
-  echo "password policy is already installed; nothing to do here"
-fi
+
+installPwdPolicyIfNecessary
+
 stopInitDBDaemon
 
 echo "[DOGU] Update password change notification user ..."
@@ -245,11 +231,11 @@ setup_cron
 echo "[DOGU] Update password change sender address mapping ..."
 update_email_sender_alias_mapping
 
-
 # set stage for health check
 doguctl state ready
 
-echo "[DOGU] Starting ldap ..."
+# Make sure permissions are correct
+chmod -R 700 "${OPENLDAP_CONFIG_DIR}"
 
-/usr/sbin/slapd -h "ldap:/// ldapi://$(_escurl ${SLAPD_IPC_SOCKET})" -u ldap -g ldap -d "${LOGLEVEL}"
-
+echo "Starting ldap..."
+/usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

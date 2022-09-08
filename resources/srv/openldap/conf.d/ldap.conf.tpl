@@ -2,11 +2,11 @@
 # LDAP Defaults
 #
 
-# See ldap.conf(5) for details
+# See ldap.conf(5) for detailse
 # This file should be world readable but not world writable.
 
 #BASE   {{.Env.Get "OPENLDAP_SUFFIX" }}
-URI    ldap://
+URI    ldapi://
 
 #SIZELIMIT  12
 #TIMELIMIT  15
