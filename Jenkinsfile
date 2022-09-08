@@ -35,7 +35,7 @@ node('vagrant'){
       }
 
       stage('Shellcheck'){
-         shellCheck("./resources/migration.sh ./resources/scheduled_jobs.sh ./resources/send-mail-after-changed-password.sh ./resources/startup.sh ./resources/srv/openldap/create-sa.sh ./resources/srv/openldap/remove-sa.sh")
+         shellCheck("./resources/scheduled_jobs.sh ./resources/send-mail-after-changed-password.sh ./resources/startup.sh ./resources/srv/openldap/create-sa.sh ./resources/srv/openldap/remove-sa.sh")
       }
 
       stage('Shell tests') {
