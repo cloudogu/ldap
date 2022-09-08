@@ -11,8 +11,8 @@ Dennoch ist es wichtig zu erwähnen, falls später einmal an einer älteren Vers
 werden müssen.
 
 # Installation des Moduls
-Damit es genutzt werden kann, muss das Password-Policy-Modul zusätzlich zum Laden noch installiert werden. 
-Das geschieht über diesen Befehl:
+Damit die Password-Policy genutzt werden kann, muss das Password-Policy-Modul zusätzlich zum Laden noch installiert werden. 
+Das geschieht über den Befehl:
 ```
 ldapadd <<EOF
 dn: cn=module{0},cn=config
@@ -23,8 +23,8 @@ EOF
 ```
 
 # Policy-OU anlegen
-Damit Password-Policies angelegt werden können, muss eine Organizational Unit (OU) für Policies angelegt werden.
-Das geschieht mit diesem Befehl:
+Um Password-Policies angelegt zu können, muss eine Organizational Unit (OU) für Policies angelegt werden.
+Das geschieht mit dem Befehl:
 ```
 ldapadd <<EOF
 dn: ou=Policies,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}
@@ -39,8 +39,8 @@ Wichtig zu beachten: In dem Befehl sind Variablen enthalten (LDAP_DOMAIN bzw. OP
 Diese können je nach Umgebung variieren.
 
 # Password-Policy Overlay
-Damit alle Features der Password-Policy vollständig genutzt werden können, muss das ppolicy-Overlay hinzugefügt werden.
-Das geschieht über diesen Befehl:
+Außerdem ist es nötig das ppolicy-Overlay hinzugefügt wird.
+Das geschieht über den Befehl:
 ```
 ldapadd <<EOF
 dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
@@ -53,8 +53,8 @@ EOF
 ```
 
 Wichtig zu beachten ist, dass in diesem Befehl die Datenbank enthalten ist (`olcDatabase={1}mdb`). Dieser
-Befehl muss beim Wechsel der Datenbank entsprechend angepasst werden.
-Außerdem: In dem Befehl sind Variablen enthalten (LDAP_DOMAIN bzw. OPENLDAP_SUFFIX) => definiert in der `startup.sh`.
+Befehl muss beim Wechsel der Datenbank entsprechend angepasst werden (also "mdb" => "hdb").
+Weiterhin ist es wichtig das in dem Befehl Variablen enthalten sind (LDAP_DOMAIN bzw. OPENLDAP_SUFFIX) => definiert in der `startup.sh`.
 Diese können je nach Umgebung variieren.
 
 # Default-Password-Policy
