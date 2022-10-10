@@ -126,10 +126,6 @@
       "Command": "/srv/openldap/remove-sa.sh"
     },
     {
-      "Name": "pre-upgrade",
-      "Command": "/pre-upgrade.sh"
-    },
-    {
       "Name": "post-upgrade",
       "Command": "/post-upgrade.sh"
     }
