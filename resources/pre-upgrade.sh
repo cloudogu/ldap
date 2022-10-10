@@ -12,6 +12,7 @@ if [[ ! -d ${MIGRATION_TMP_DIR} ]]; then
 fi
 
 function run_preupgrade() {
+  exit 0
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
 
