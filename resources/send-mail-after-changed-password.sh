@@ -29,7 +29,7 @@ OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 LDAP_SEARCHBASE="ou=people,o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
 LDAP_SEARCHFILTER="(&(uid=*)(objectClass=inetOrgPerson))"
 LDAP_SEARCH_BIN="/usr/bin/ldapsearch"
-ldap_param="-LLL -Q"
+ldap_param="-LLL -Q -o ldif-wrap=no"
 
 # Relevant LDAP attributes of a user
 #   CN: Common name of the user
