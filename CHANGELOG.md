@@ -5,9 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Prevent ldapsearch results from being cut after 79 characters (#31)
 
 ## [v2.6.2-2] - 2022-09-08
-
 ### Changed
 - Make sure socket path exists and use default socket path for ldap connections at dogu startup as it was before 2.6.2-1
 - Move migration logic from startup script to `post-upgrade.sh`
