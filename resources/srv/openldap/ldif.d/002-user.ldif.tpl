@@ -15,3 +15,4 @@ cn: {{.Env.Get "ADMIN_DISPLAYNAME" }}
 displayName: {{.Env.Get "ADMIN_DISPLAYNAME" }}
 mail: {{.Env.Get "ADMIN_MAIL" }}
 userPassword: {{.Env.Get "ADMIN_PASSWORD_ENC" }}
+external: false
