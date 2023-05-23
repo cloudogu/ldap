@@ -1,4 +1,0 @@
-dn: uid=ecosystem,ou=People,o=ces.local,dc=cloudogu,dc=com
-changetype: modify
-add: objectClass
-objectClass: cesperson
