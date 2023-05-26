@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/base:3.15.3-1
+FROM registry.cloudogu.com/official/base:3.15.8-1
 
 LABEL NAME="official/ldap" \
       VERSION="2.6.2-3" \
@@ -11,7 +11,7 @@ COPY ./resources /
 # Install application and dependencies
 RUN set -eux -o pipefail \
     && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
-                     openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \ 
+                     openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
     && apk add mailx ssmtp su-exec \
     && rm -rf /var/cache/apk/* \
