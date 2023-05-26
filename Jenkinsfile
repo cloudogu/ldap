@@ -79,10 +79,6 @@ node('vagrant'){
             // Wait for upgraded dogu to get healthy
             ecoSystem.waitForDogu(doguName)
           }
-
-          stage('Integration Tests - After Upgrade') {
-            echo "No integration test exists."
-          }
         }
 
         if (gitflow.isReleaseBranch()) {
