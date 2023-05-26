@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-4] - 2023-05-26
+### Changed
+- Upgrade base image to 3.15.8-1 to fix `curl` CVEs (#33)
+
 ## [v2.6.2-3] - 2022-11-08
 ### Fixed
 - Prevent ldapsearch results from being cut after 79 characters (#31)

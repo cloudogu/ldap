@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@1.48.0', 'github.com/cloudogu/dogu-build-lib@v1.6.0'])
+@Library(['github.com/cloudogu/ces-build-lib@1.64.2', 'github.com/cloudogu/dogu-build-lib@v2.1.0'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 
@@ -60,10 +60,6 @@ node('vagrant'){
           ecoSystem.verify("/dogu")
         }
 
-        stage('Integration Tests') {
-          echo "No integration test exists."
-        }
-
         if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
           stage('Upgrade dogu') {
             // Remove new dogu that has been built and tested above
@@ -82,10 +78,6 @@ node('vagrant'){
 
             // Wait for upgraded dogu to get healthy
             ecoSystem.waitForDogu(doguName)
-          }
-
-          stage('Integration Tests - After Upgrade') {
-            echo "No integration test exists."
           }
         }
 
@@ -129,5 +121,3 @@ def executeShellTests() {
         junit allowEmptyResults: true, testResults: 'target/shell_test_reports/*.xml'
     }
 }
-
-
