@@ -219,6 +219,7 @@ fi
 startInitDBDaemon
 
 installPwdPolicyIfNecessary
+ldapadd -f /srv/openldap/schema/cesperson.ldif || echo "Cesperson already exists!"
 
 stopInitDBDaemon
 
