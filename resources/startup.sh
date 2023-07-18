@@ -21,6 +21,9 @@ echo "                       'V/(/////////////////////////////V'      "
 source install-pwd-policy.sh
 
 # shellcheck disable=SC1091
+source install-cesperson.sh
+
+# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -219,7 +222,7 @@ fi
 startInitDBDaemon
 
 installPwdPolicyIfNecessary
-ldapadd -f /srv/openldap/schema/cesperson.ldif || echo "Cesperson already exists!"
+installCespersonIfNecessary
 
 stopInitDBDaemon
 
