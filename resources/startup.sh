@@ -21,6 +21,9 @@ echo "                       'V/(/////////////////////////////V'      "
 source install-pwd-policy.sh
 
 # shellcheck disable=SC1091
+source install-cesperson.sh
+
+# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -219,6 +222,7 @@ fi
 startInitDBDaemon
 
 installPwdPolicyIfNecessary
+installCespersonIfNecessary
 
 stopInitDBDaemon
 

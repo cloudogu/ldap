@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-5] - 2023-07-20
+### Added
+- `cesperson` objectClass which allows an entry to have an external attribute (#35)
+
+### Changed
+- Update makefiles to 7.10.0
+- Update dogu-build-lib to 2.2.0
+- Update ces-build-lib to 1.64.0
+
 ## [v2.6.2-4] - 2023-05-26
 ### Changed
 - Upgrade base image to 3.15.8-1 to fix `curl` CVEs (#33)
