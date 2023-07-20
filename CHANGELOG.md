@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `cesperson` objectClass which allows an entry to have an external attribute (#35)
+
+### Changed
+- Update makefiles to 7.10.0
+- Update dogu-build-lib to 2.2.0
+- Update ces-build-lib to 1.64.0
 
 ## [v2.6.2-4] - 2023-05-26
 ### Changed

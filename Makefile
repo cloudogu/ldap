@@ -1,7 +1,7 @@
 # Set these to the desired values
 ARTIFACT_ID=ldap
 VERSION=2.6.2-4
-MAKEFILES_VERSION=7.5.0
+MAKEFILES_VERSION=7.10.0
 .DEFAULT_GOAL:=default
 
 include build/make/variables.mk
