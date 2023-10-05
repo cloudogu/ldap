@@ -89,6 +89,12 @@
           "ERROR"
         ]
       }
+    },
+    {
+      "Name": "user_search_size_limit",
+      "Description": "Set how many users can be retrieved in a single search operation",
+      "Optional": true,
+      "Default": "4000"
     }
   ],
   "Volumes": [
