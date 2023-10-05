@@ -21,6 +21,7 @@ function start_migration() {
   sed -i '/set_lk_max_locks/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/set_lk_max_objects/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/set_lk_max_lockers/d' "${MIGRATION_TMP_DIR}"/config.ldif
+  sed -i 's/olcSizeLimit: 1000/olcSizeLimit: 3000/g' config.ldif
   sed -i '/dn: cn={4}ppolicy/,/^$/d' "${MIGRATION_TMP_DIR}"/config.ldif
 
   echo "[DOGU] Cleanup config and db folders ..."
