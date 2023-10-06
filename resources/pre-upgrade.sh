@@ -32,6 +32,11 @@ function run_preupgrade() {
     start_export
   fi
 
+  if [[ "${FROM_VERSION}" -le "2.6.2-6" ]]; then
+      export_db
+      create_migration_dir
+  fi
+
   doguctl config "startup/setup_done" "true"
 
   echo "LDAP pre-upgrade done"
@@ -94,15 +99,24 @@ function versionXLessOrEqualThanY() {
 }
 
 function start_export() {
-  # Creating dump
-  echo "[DOGU] exporting DB ..."
-  slapcat -n 0 -l ${MIGRATION_TMP_DIR}/config.ldif
-  slapcat -n 1 -l ${MIGRATION_TMP_DIR}/data.ldif
-  mkdir -p /var/lib/openldap/migration
-  cp ${MIGRATION_TMP_DIR}/config.ldif /var/lib/openldap/migration
-  cp ${MIGRATION_TMP_DIR}/data.ldif /var/lib/openldap/migration
+  export_db
+  create_migration_dir
   doguctl config migration_mdb_hdb "true"
 }
+
+function export_db() {
+    # Creating dump
+    echo "[DOGU] exporting DB ..."
+    slapcat -n 0 -l ${MIGRATION_TMP_DIR}/config.ldif
+    slapcat -n 1 -l ${MIGRATION_TMP_DIR}/data.ldif
+}
+
+function create_migration_dir() {
+    mkdir -p /var/lib/openldap/migration
+    cp ${MIGRATION_TMP_DIR}/config.ldif /var/lib/openldap/migration
+    cp ${MIGRATION_TMP_DIR}/data.ldif /var/lib/openldap/migration
+}
+
 
 # versionXLessThanY returns true if X is less than Y; otherwise false
 function versionXLessThanY() {

@@ -12,6 +12,7 @@ function start_migration() {
   cp /var/lib/openldap/migration/data.ldif "${MIGRATION_TMP_DIR}"
 
   echo "[DOGU] Changing config ..."
+  sed -i 's/olcSizeLimit: 1000/olcSizeLimit: 3000/g' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/back_bdb.so/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/back_hdb.so/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i 's/hdb/mdb/g' "${MIGRATION_TMP_DIR}"/config.ldif
@@ -21,16 +22,10 @@ function start_migration() {
   sed -i '/set_lk_max_locks/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/set_lk_max_objects/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/set_lk_max_lockers/d' "${MIGRATION_TMP_DIR}"/config.ldif
-  sed -i 's/olcSizeLimit: 1000/olcSizeLimit: 3000/g' config.ldif
   sed -i '/dn: cn={4}ppolicy/,/^$/d' "${MIGRATION_TMP_DIR}"/config.ldif
 
-  echo "[DOGU] Cleanup config and db folders ..."
-  rm -rf /etc/openldap/slapd.d/*
-  rm -rf /var/lib/openldap/*
-
-  echo "[DOGU] Importing dump ..."
-  slapadd -n 0 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/config.ldif
-  slapadd -n 1 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/data.ldif
+  clean_config_data
+  import_dump
 
   echo "[DOGU] Setting rights correctly ..."
   chmod -R 700 /etc/openldap/slapd.d
@@ -40,6 +35,20 @@ function start_migration() {
 
   doguctl config --rm migration_mdb_hdb
   rm -rf "${MIGRATION_TMP_DIR}"
+}
+
+
+function clean_config_data() {
+    echo "[DOGU] Cleanup config and db folders ..."
+    rm -rf /etc/openldap/slapd.d/*
+    rm -rf /var/lib/openldap/*
+}
+
+
+function import_dump() {
+  echo "[DOGU] Importing dump ..."
+  slapadd -n 0 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/config.ldif
+  slapadd -n 1 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/data.ldif
 }
 
 function run_postupgrade() {
