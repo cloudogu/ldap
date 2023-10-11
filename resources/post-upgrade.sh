@@ -6,7 +6,10 @@ set -o pipefail
 source /pre-upgrade.sh
 
 function start_migration() {
-  move_exports "migration"
+  echo "[DOGU] Moving exports ..."
+  mkdir -p "${MIGRATION_TMP_DIR}"
+  cp /var/lib/openldap/migration/config.ldif "${MIGRATION_TMP_DIR}"
+  cp /var/lib/openldap/migration/data.ldif "${MIGRATION_TMP_DIR}"
 
   echo "[DOGU] Changing config ..."
   sed -i '/back_bdb.so/d' "${MIGRATION_TMP_DIR}"/config.ldif
@@ -20,51 +23,22 @@ function start_migration() {
   sed -i '/set_lk_max_lockers/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/dn: cn={4}ppolicy/,/^$/d' "${MIGRATION_TMP_DIR}"/config.ldif
 
-  clean_config_data
-  import_dump
-  set_permissions
+  echo "[DOGU] Cleanup config and db folders ..."
+  rm -rf /etc/openldap/slapd.d/*
+  rm -rf /var/lib/openldap/*
 
-  doguctl config --rm migration_mdb_hdb
-  rm -rf "${MIGRATION_TMP_DIR}"
-}
-
-function change_limit() {
-    move_exports "limit"
-    echo "[DOGU] Changing config ..."
-    sed -i "s/olcSizeLimit: 1000/olcSizeLimit: 5000/g" "${MIGRATION_TMP_DIR}"/config.ldif
-    clean_config_data
-    import_dump
-    set_permissions
-    rm -rf "${MIGRATION_TMP_DIR}"
-}
-
-
-function clean_config_data() {
-    echo "[DOGU] Cleanup config and db folders ..."
-    rm -rf /etc/openldap/slapd.d/*
-    rm -rf /var/lib/openldap/*
-}
-
-
-function import_dump() {
   echo "[DOGU] Importing dump ..."
   slapadd -n 0 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/config.ldif
   slapadd -n 1 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/data.ldif
-}
 
-function set_permissions() {
-    echo "[DOGU] Setting rights correctly ..."
-    chmod -R 700 /etc/openldap/slapd.d
-    chmod -R 700 /var/lib/openldap
-    chown -R ldap:ldap /etc/openldap/slapd.d
-    chown -R ldap:ldap /var/lib/openldap
-}
+  echo "[DOGU] Setting rights correctly ..."
+  chmod -R 700 /etc/openldap/slapd.d
+  chmod -R 700 /var/lib/openldap
+  chown -R ldap:ldap /etc/openldap/slapd.d
+  chown -R ldap:ldap /var/lib/openldap
 
-function move_exports() {
-    echo "[DOGU] Moving exports ..."
-    mkdir -p "${MIGRATION_TMP_DIR}"
-    cp /var/lib/openldap/"${1}"/config.ldif "${MIGRATION_TMP_DIR}"
-    cp /var/lib/openldap/"${1}"/data.ldif "${MIGRATION_TMP_DIR}"
+  doguctl config --rm migration_mdb_hdb
+  rm -rf "${MIGRATION_TMP_DIR}"
 }
 
 function run_postupgrade() {
@@ -75,11 +49,6 @@ function run_postupgrade() {
   if [[ -d "/var/lib/openldap/migration" ]]; then
     echo "Found data to migrate from old ldap..."
     start_migration
-  fi
-
-  if [[ -d "/var/lib/openldap/limit" ]]; then
-      echo "Limit needs to be updated..."
-      change_limit
   fi
 }
 
