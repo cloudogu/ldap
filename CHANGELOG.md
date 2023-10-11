@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a configuration key to change how many users a single search operation can retrieve at once (#34)
+
 ## [v2.6.2-5] - 2023-07-20
 ### Added
 - `cesperson` objectClass which allows an entry to have an external attribute (#35)
