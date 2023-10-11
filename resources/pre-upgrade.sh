@@ -32,9 +32,10 @@ function run_preupgrade() {
     start_export
   fi
 
-  if [[ "${FROM_VERSION}" -le "2.6.2-6" ]]; then
+  if [[ "$(versionXLessOrEqualThanY "${FROM_VERSION}" "2.6.2-6"; echo $?)" == "0" ]]; then
+      echo "Detected upgrade from <= 2.6.2-6: increasing user limit"
       export_db
-      create_migration_dir
+      create_migration_dir "limit"
   fi
 
   doguctl config "startup/setup_done" "true"
@@ -99,8 +100,9 @@ function versionXLessOrEqualThanY() {
 }
 
 function start_export() {
+  echo "[DOGU] start export ..."
   export_db
-  create_migration_dir
+  create_migration_dir "migration"
   doguctl config migration_mdb_hdb "true"
 }
 
@@ -112,9 +114,10 @@ function export_db() {
 }
 
 function create_migration_dir() {
-    mkdir -p /var/lib/openldap/migration
-    cp ${MIGRATION_TMP_DIR}/config.ldif /var/lib/openldap/migration
-    cp ${MIGRATION_TMP_DIR}/data.ldif /var/lib/openldap/migration
+    echo "[DOGU] creating dir ${1} ..."
+    mkdir -p /var/lib/openldap/"${1}"
+    cp ${MIGRATION_TMP_DIR}/config.ldif /var/lib/openldap/"${1}"
+    cp ${MIGRATION_TMP_DIR}/data.ldif /var/lib/openldap/"${1}"
 }
 
 

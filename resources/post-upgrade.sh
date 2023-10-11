@@ -6,13 +6,9 @@ set -o pipefail
 source /pre-upgrade.sh
 
 function start_migration() {
-  echo "[DOGU] Moving exports ..."
-  mkdir -p "${MIGRATION_TMP_DIR}"
-  cp /var/lib/openldap/migration/config.ldif "${MIGRATION_TMP_DIR}"
-  cp /var/lib/openldap/migration/data.ldif "${MIGRATION_TMP_DIR}"
+  move_exports "migration"
 
   echo "[DOGU] Changing config ..."
-  sed -i 's/olcSizeLimit: 1000/olcSizeLimit: 3000/g' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/back_bdb.so/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i '/back_hdb.so/d' "${MIGRATION_TMP_DIR}"/config.ldif
   sed -i 's/hdb/mdb/g' "${MIGRATION_TMP_DIR}"/config.ldif
@@ -26,15 +22,20 @@ function start_migration() {
 
   clean_config_data
   import_dump
-
-  echo "[DOGU] Setting rights correctly ..."
-  chmod -R 700 /etc/openldap/slapd.d
-  chmod -R 700 /var/lib/openldap
-  chown -R ldap:ldap /etc/openldap/slapd.d
-  chown -R ldap:ldap /var/lib/openldap
+  set_permissions
 
   doguctl config --rm migration_mdb_hdb
   rm -rf "${MIGRATION_TMP_DIR}"
+}
+
+function change_limit() {
+    move_exports "limit"
+    echo "[DOGU] Changing config ..."
+    sed -i "s/olcSizeLimit: 1000/olcSizeLimit: 5000/g" "${MIGRATION_TMP_DIR}"/config.ldif
+    clean_config_data
+    import_dump
+    set_permissions
+    rm -rf "${MIGRATION_TMP_DIR}"
 }
 
 
@@ -51,6 +52,21 @@ function import_dump() {
   slapadd -n 1 -F /etc/openldap/slapd.d -l "${MIGRATION_TMP_DIR}"/data.ldif
 }
 
+function set_permissions() {
+    echo "[DOGU] Setting rights correctly ..."
+    chmod -R 700 /etc/openldap/slapd.d
+    chmod -R 700 /var/lib/openldap
+    chown -R ldap:ldap /etc/openldap/slapd.d
+    chown -R ldap:ldap /var/lib/openldap
+}
+
+function move_exports() {
+    echo "[DOGU] Moving exports ..."
+    mkdir -p "${MIGRATION_TMP_DIR}"
+    cp /var/lib/openldap/"${1}"/config.ldif "${MIGRATION_TMP_DIR}"
+    cp /var/lib/openldap/"${1}"/data.ldif "${MIGRATION_TMP_DIR}"
+}
+
 function run_postupgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
@@ -59,6 +75,11 @@ function run_postupgrade() {
   if [[ -d "/var/lib/openldap/migration" ]]; then
     echo "Found data to migrate from old ldap..."
     start_migration
+  fi
+
+  if [[ -d "/var/lib/openldap/limit" ]]; then
+      echo "Limit needs to be updated..."
+      change_limit
   fi
 }
 
