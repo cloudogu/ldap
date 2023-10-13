@@ -24,6 +24,9 @@ source install-pwd-policy.sh
 source install-cesperson.sh
 
 # shellcheck disable=SC1091
+source increase-user-search-limit.sh
+
+# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -223,6 +226,7 @@ startInitDBDaemon
 
 installPwdPolicyIfNecessary
 installCespersonIfNecessary
+increaseUserSearchLimit
 
 stopInitDBDaemon
 

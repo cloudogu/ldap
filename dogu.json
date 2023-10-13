@@ -1,6 +1,6 @@
 {
   "Name": "official/ldap",
-  "Version": "2.6.2-5",
+  "Version": "2.6.2-6",
   "DisplayName": "OpenLDAP",
   "Description": "OpenLDAP server for user and group management.",
   "Url": "http://www.openldap.org",
@@ -89,6 +89,12 @@
           "ERROR"
         ]
       }
+    },
+    {
+      "Name": "user_search_size_limit",
+      "Description": "Set how many users can be retrieved in a single search operation",
+      "Optional": true,
+      "Default": "4000"
     }
   ],
   "Volumes": [
