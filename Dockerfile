@@ -13,6 +13,7 @@ RUN set -eux -o pipefail \
     && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
+                     openldap-overlay-sssvlv \
     && apk add mailx ssmtp su-exec \
     && rm -rf /var/cache/apk/* \
     # ensure permissions of scripts

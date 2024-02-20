@@ -42,6 +42,7 @@ olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
 olcModuleLoad: {3}unique
 olcModuleLoad: {4}ppolicy
+olcModuleLoad: {5}sssvlv
 
 #
 # SCHEMATA
@@ -191,6 +192,8 @@ olcPPolicyHashCleartext: TRUE
 
 # BACKEND Virtual List View Server Side Sorting OVERLAY
 dn: olcOverlay={5}sssvlv,olcDatabase={1}mdb,cn=config
-objectClass: olcConfig
 objectClass: olcOverlayConfig
-olcOverlay: {5} sssvlv
+objectClass: olcSssVlvConfig
+olcOverlay: {5}sssvlv
+olcSssVlvMax: 8
+olcSssVlvMaxKeys: 5
