@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/base:3.15.8-1
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.2-6" \
+      VERSION="2.6.2-7" \
       maintainer="hello@cloudogu.com"
 
 ENV LDAP_VERSION="2.6.2-r0"
@@ -13,6 +13,7 @@ RUN set -eux -o pipefail \
     && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
+                     openldap-overlay-sssvlv \
     && apk add mailx ssmtp su-exec \
     && rm -rf /var/cache/apk/* \
     # ensure permissions of scripts

@@ -42,6 +42,7 @@ olcModuleLoad: {1}memberof
 olcModuleLoad: {2}refint
 olcModuleLoad: {3}unique
 olcModuleLoad: {4}ppolicy
+olcModuleLoad: {5}sssvlv
 
 #
 # SCHEMATA
@@ -188,3 +189,11 @@ objectClass: olcPPolicyConfig
 olcOverlay: {4}ppolicy
 olcPPolicyDefault: cn=default,ou=Policies,o={{.Env.Get "LDAP_DOMAIN" }},{{.Env.Get "OPENLDAP_SUFFIX" }}
 olcPPolicyHashCleartext: TRUE
+
+# BACKEND Virtual List View Server Side Sorting OVERLAY
+dn: olcOverlay={5}sssvlv,olcDatabase={1}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSssVlvConfig
+olcOverlay: {5}sssvlv
+olcSssVlvMax: 8
+olcSssVlvMaxKeys: 5

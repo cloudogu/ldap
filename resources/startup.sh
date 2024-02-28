@@ -24,6 +24,9 @@ source install-pwd-policy.sh
 source install-cesperson.sh
 
 # shellcheck disable=SC1091
+source install-sss-vlv.sh
+
+# shellcheck disable=SC1091
 source increase-user-search-limit.sh
 
 # shellcheck disable=SC1091
@@ -226,6 +229,7 @@ startInitDBDaemon
 
 installPwdPolicyIfNecessary
 installCespersonIfNecessary
+installSSSVLVIfNecessary
 increaseUserSearchLimit
 
 stopInitDBDaemon

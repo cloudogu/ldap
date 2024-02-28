@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.2-7] - 2024-02-28
+### Changed
+- Add "openldap-overlay-sssvlv" for server-side-sorting and virtual-list-views
+
 ## [v2.6.2-6] - 2023-10-13
 ### Added
 - Added a configuration key to change how many users a single search operation can retrieve at once (#34)
