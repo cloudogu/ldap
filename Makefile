@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=ldap
-VERSION=2.6.2-6
+VERSION=2.6.2-7
 MAKEFILES_VERSION=7.10.0
 .DEFAULT_GOAL:=default
 
