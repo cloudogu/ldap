@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.7-1] - 2024-06-26
+### Changed
+- update base image to 3.20.1-1 to update `doguctl` to 0.11.0 (#42)
+  - openldap is updated to 2.6.7 due to alpine base image upgrade
+
 ## [v2.6.2-7] - 2024-02-28
 ### Changed
 - Add "openldap-overlay-sssvlv" for server-side-sorting and virtual-list-views
