@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.7-2] - 2024-06-27
+### Changed
+- [#42] Update Base Image to v3.20.1-2
+
+### Security
+- this release closes the following CVEs
+    - CVE-2024-24788
+    - CVE-2024-24789
+    - CVE-2024-24790
+
 ## [v2.6.7-1] - 2024-06-26
 ### Changed
 - update base image to 3.20.1-1 to update `doguctl` to 0.11.0 (#42)
