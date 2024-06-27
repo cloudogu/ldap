@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- [#42] Update Base Image to v3.20.1-2
+
+### Security
+- this release closes the following CVEs
+    - CVE-2024-24788
+    - CVE-2024-24789
+    - CVE-2024-24790
 
 ## [v2.6.7-1] - 2024-06-26
 ### Changed
