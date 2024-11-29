@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/base:3.20.2-1
+FROM registry.cloudogu.com/official/base:3.20.3-3
 
 LABEL NAME="official/ldap" \
       VERSION="2.6.7-4" \
