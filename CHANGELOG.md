@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.8-1] - 2024-09-19
+### Changed
+- Upgrade base-image to 3.20.3-3
+- openldap is updated to 2.6.8
+
 ## [v2.6.7-4] - 2024-09-19
 ### Changed
 - Relicense to AGPL-3.0-only
