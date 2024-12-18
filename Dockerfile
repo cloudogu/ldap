@@ -1,10 +1,10 @@
-FROM registry.cloudogu.com/official/base:3.20.2-1
+FROM registry.cloudogu.com/official/base:3.20.3-3
 
 LABEL NAME="official/ldap" \
       VERSION="2.6.7-4" \
       maintainer="hello@cloudogu.com"
 
-ENV LDAP_VERSION="2.6.7-r0"
+ENV LDAP_VERSION="2.6.8-r0"
 
 COPY ./resources /
 
