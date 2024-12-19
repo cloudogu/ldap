@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v2.6.8-1] - 2024-12-19
 ### Changed
 - Upgrade base-image to v3.20.3-3
 - openldap is updated to v2.6.8
