@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.8-1] - 2024-12-19
+### Changed
+- Upgrade base-image to v3.20.3-3
+- openldap is updated to v2.6.8
+- Upgrade Makefile Version to v9.3.2
+- Upgrade dogu-build-lib to v3.0.0
+- Upgrade ces-build-lib to v3.1.0
+
 ## [v2.6.7-4] - 2024-09-19
 ### Changed
 - Relicense to AGPL-3.0-only
