@@ -7,8 +7,6 @@ function setMdbSizeLimit() {
   current_size_limit=$(ldapsearch -b olcDatabase={1}mdb,cn=config | grep olcDbMaxSize | awk '{print $2}') || current_size_limit=0
   current_size_limit=${current_size_limit:-0}
 
-  echo "current_size_limit: $current_size_limit"
-
   if [ "$mdb_size_limit" -gt "$current_size_limit" ]; then
     if [ "$current_size_limit" -eq "0" ]; then
       echo "[SET-MDB-DB-SIZE-LIMIT] No current size limit found. Setting new limit."
