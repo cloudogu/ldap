@@ -95,6 +95,12 @@
       "Description": "Set how many users can be retrieved in a single search operation",
       "Optional": true,
       "Default": "4000"
+    },
+    {
+      "Name": "max_db_size",
+      "Description": "Specify the maximum size of the database in bytes. A memory map of this size is allocated at startup time and the database will not be allowed to grow beyond this size.",
+      "Optional": true,
+      "Default": "104857600"
     }
   ],
   "Volumes": [
