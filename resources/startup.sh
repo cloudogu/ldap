@@ -30,6 +30,9 @@ source install-sss-vlv.sh
 source increase-user-search-limit.sh
 
 # shellcheck disable=SC1091
+source set-mdb-size-limit.sh
+
+# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -231,6 +234,7 @@ installPwdPolicyIfNecessary
 installCespersonIfNecessary
 installSSSVLVIfNecessary
 increaseUserSearchLimit
+setMdbSizeLimit
 
 stopInitDBDaemon
 

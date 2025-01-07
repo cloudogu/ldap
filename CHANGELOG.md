@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.8-2] - 2025-01-07
+### Added
+- [#51] Added config to adjust the maximum size of the database 
+
+### Changed
+- Upgrade base-image to v3.21.0-1
+
 ## [v2.6.8-1] - 2024-12-19
 ### Changed
 - Upgrade base-image to v3.20.3-3
