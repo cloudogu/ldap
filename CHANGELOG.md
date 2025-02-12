@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- [#53] Added missing config keys to dogu descriptor.
+  This is to distinguish dogu config from local config during the migration to multinode.
+- Volume for local config
+### Changed
+- Consistently use doguctl to retrieve `openldap_suffix` instead of hardcoding it in some cases.
 
 ## [v2.6.8-2] - 2025-01-07
 ### Added

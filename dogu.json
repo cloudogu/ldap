@@ -21,8 +21,42 @@
   ],
   "Configuration": [
     {
+      "Name": "container_config/cpu_core_limit",
+      "Description": "Limits the container's CPU core usage. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/cpu_core_request",
+      "Description": "Requests the container's minimal CPU core requirement. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true
+    },
+    {
       "Name": "container_config/memory_limit",
-      "Description": "Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte)",
+      "Description": "Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/memory_request",
+      "Description": "Requests the container's minimal memory requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/storage_limit",
+      "Description": "Limits the container's ephemeral storage usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/storage_request",
+      "Description": "Requests the container's minimal ephemeral storage requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
       "Optional": true,
       "Validation": {
         "Type": "BINARY_MEASUREMENT"
@@ -101,6 +135,59 @@
       "Description": "Specify the maximum size of the database in bytes. A memory map of this size is allocated at startup time and the database will not be allowed to grow beyond this size.",
       "Optional": true,
       "Default": "104857600"
+    },
+    {
+      "Name": "rootpwd",
+      "Description": "The LDAP root password (olcRootPW). If left unset, a random password will be generated.",
+      "Optional": true,
+      "Encrypted": true
+    },
+    {
+      "Name": "admin_username",
+      "Description": "The username of the CES admin. Usually, this is set during setup.",
+      "Optional": true,
+      "Default": "admin"
+    },
+    {
+      "Name": "admin_member",
+      "Description": "Specifies if the CES admin is also admin in other dogus.",
+      "Optional": true,
+      "Default": "false"
+    },
+    {
+      "Name": "admin_givenname",
+      "Description": "Specifies the givenName attribute of the CES admin in the LDAP.",
+      "Optional": true,
+      "Default": "admin"
+    },
+    {
+      "Name": "admin_surname",
+      "Description": "Specifies the sn attribute of the CES admin in the LDAP.",
+      "Optional": true,
+      "Default": "admin"
+    },
+    {
+      "Name": "admin_displayname",
+      "Description": "Specifies the displayName attribute of the CES admin in the LDAP.",
+      "Optional": true,
+      "Default": "admin"
+    },
+    {
+      "Name": "admin_mail",
+      "Description": "Specifies the mail attribute of the CES admin in the LDAP. Defaults to <admin_username>@<ces-domain>.",
+      "Optional": true
+    },
+    {
+      "Name": "admin_password",
+      "Description": "Specifies the userPassword attribute of the CES admin in the LDAP.",
+      "Optional": false,
+      "Encrypted": true
+    },
+    {
+      "Name": "openldap_suffix",
+      "Description": "Specifies general suffix used for the ldap hierarchy.",
+      "Optional": true,
+      "Default": "dc=cloudogu,dc=com"
     }
   ],
   "Volumes": [
@@ -124,6 +211,13 @@
       "Owner": "100",
       "Group": "101",
       "NeedsBackup": false
+    },
+    {
+      "Name": "localConfig",
+      "Path": "/var/ces/config",
+      "Owner": "100",
+      "Group": "101",
+      "NeedsBackup": true
     }
   ],
   "ExposedCommands": [

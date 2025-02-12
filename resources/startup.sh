@@ -50,8 +50,8 @@ export OPENLDAP_BACKEND_DATABASE="mdb"
 export OPENLDAP_BACKEND_OBJECTCLASS="olcMdbConfig"
 OPENLDAP_ULIMIT="2048"
 
-# proposal: use doguctl config openldap_suffix in future
-export OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+OPENLDAP_SUFFIX=$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")
+export OPENLDAP_SUFFIX
 
 # migration tmp folder
 export MIGRATION_TMP_DIR="/tmp/migration"
