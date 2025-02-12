@@ -24,8 +24,7 @@
 
     LDAP_DOMAIN=$(doguctl config --global domain)
     export LDAP_DOMAIN
-    # proposal: use doguctl config openldap_suffix in future
-    OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
+    OPENLDAP_SUFFIX=$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")
     export OPENLDAP_SUFFIX
 
     # create random schema suffix and password
