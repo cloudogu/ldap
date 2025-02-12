@@ -211,6 +211,13 @@
       "Owner": "100",
       "Group": "101",
       "NeedsBackup": false
+    },
+    {
+      "Name": "localConfig",
+      "Path": "/var/ces/config",
+      "Owner": "100",
+      "Group": "101",
+      "NeedsBackup": true
     }
   ],
   "ExposedCommands": [

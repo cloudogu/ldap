@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#53] Added missing config keys to dogu descriptor.
   This is to distinguish dogu config from local config during the migration to multinode.
+- Volume for local config
 ### Changed
 - Consistently use doguctl to retrieve `openldap_suffix` instead of hardcoding it in some cases.
 
