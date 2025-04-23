@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.8-4] - 2025-04-23
+
+### Changed
+- [#55] Set sensible resource requests and limits
+
 ## [v2.6.8-3] - 2025-02-12
 ### Added
 - [#53] Added missing config keys to dogu descriptor.
