@@ -4,13 +4,13 @@ LABEL NAME="official/ldap" \
       VERSION="2.6.8-4" \
       maintainer="hello@cloudogu.com"
 
-ENV LDAP_VERSION="2.6.8-r0"
+ENV OPENLDAP_PKG_VER="2.6.8-r0"
 
 COPY ./resources /
 
 # Install application and dependencies
 RUN set -eux -o pipefail \
-    && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
+    && apk add --update openldap=${OPENLDAP_PKG_VER} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
                      openldap-overlay-sssvlv \
