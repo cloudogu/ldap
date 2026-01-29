@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/base:3.23.0-1
+FROM registry.cloudogu.com/official/base:3.23.2-2
 
 LABEL NAME="official/ldap" \
       VERSION="2.6.10-0" \
@@ -10,6 +10,8 @@ COPY ./resources /
 
 # Install application and dependencies
 RUN set -eux -o pipefail \
+    && apk update \
+    && apk upgrade \
     && apk add --update openldap=${OPENLDAP_PKG_VER} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
