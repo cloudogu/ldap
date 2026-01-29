@@ -6,8 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v2.6.8-4] - 2025-04-23
+## [v2.6.8-5] - 2026-01-29
 
+### Security
+- [#61] CVE fixed: [cve-2025-15467](https://avd.aquasec.com/nvd/2025/cve-2025-15467/)
+- [#61] update base image to v3.23.2-2
+
+## [v2.6.10-1] - 2025-12-05
+### Changed
+- [#59] Upgrade OpenLDAP to v2.6.10-r0
+- [#59] Upgrade base-image to v3.23.0-1
+
+## [v2.6.8-4] - 2025-04-23
 ### Changed
 - [#55] Set sensible resource requests and limits
 

@@ -1,16 +1,18 @@
-FROM registry.cloudogu.com/official/base:3.21.0-1
+FROM registry.cloudogu.com/official/base:3.23.2-2
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.8-4" \
+      VERSION="2.6.8-5" \
       maintainer="hello@cloudogu.com"
 
-ENV LDAP_VERSION="2.6.8-r0"
+ENV OPENLDAP_PKG_VER="2.6.10-r0"
 
 COPY ./resources /
 
 # Install application and dependencies
 RUN set -eux -o pipefail \
-    && apk add --update openldap=${LDAP_VERSION} openldap-clients openldap-back-mdb \
+    && apk update \
+    && apk upgrade \
+    && apk add --update openldap=${OPENLDAP_PKG_VER} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
                      openldap-overlay-ppolicy  \
                      openldap-overlay-sssvlv \
