@@ -14,7 +14,8 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
                             resources/srv/openldap/create-sa.sh
                             resources/srv/openldap/remove-sa.sh
                           '''],
-    doBatsTests        : true
+    doBatsTests        : true,
+    defaultBranch      : "master"
 ])
 
 pipe.setBuildProperties()
