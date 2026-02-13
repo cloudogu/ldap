@@ -1,7 +1,7 @@
-FROM registry.cloudogu.com/official/base:3.23.2-2
+FROM registry.cloudogu.com/official/base:3.23.3-3
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.8-5" \
+      VERSION="2.6.8-6" \
       maintainer="hello@cloudogu.com"
 
 ENV OPENLDAP_PKG_VER="2.6.10-r0"
