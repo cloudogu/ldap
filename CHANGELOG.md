@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.8-7] - 2026-02-18
+### Fixed
+- [#65] Upgrade base-image to 3.23.3-4
+    - This fixes a bug in doguctl, to not check the local config if volume is not mounted.
+
 ## [v2.6.8-6] - 2026-02-13
 ### Security
 - [#63] Upgrade base-image to 3.23.3-3
