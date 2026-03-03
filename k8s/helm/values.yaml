@@ -5,7 +5,7 @@ global:
 replicas: 1
 image:
   registry: registry.cloudogu.com
-  repository: official/ldap
+  repository: k8s/ldap
   tag: 2.6.8-7
 imagePullPolicy: IfNotPresent
 
@@ -15,7 +15,34 @@ service:
 config:
   runtimeMode: component
   domain: cloudogu.local
-  suffix: dc=cloudogu,dc=com
+  # Component configuration keys aligned with dogu.json (excluding container_config/*).
+  password_change:
+    notification_enabled: "true"
+    check_interval_minutes: "1"
+    mail_sender_address: ""
+    mail_sender_name: ""
+    mail_subject: ""
+    mail_text: ""
+  logging:
+    root: "INFO"
+  user_search_size_limit: "4000"
+  max_db_size: "104857600"
+  rootpwd: ""
+  admin_username: "admin"
+  admin_member: "false"
+  admin_givenname: "admin"
+  admin_surname: "admin"
+  admin_displayname: "admin"
+  admin_mail: ""
+  admin_password: ""
+  openldap_suffix: "dc=cloudogu,dc=com"
+
+globalConfig:
+  configMapName: "global-config"
+  key: "config.yaml"
+
+# Sensitive config is rendered into a Kubernetes Secret as /etc/ces/config/sensitive/config.yaml.
+sensitiveConfig: {}
 
 # Placeholder secret references for upcoming phase 5 implementation.
 secrets:

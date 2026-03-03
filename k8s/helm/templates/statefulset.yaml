@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         {{- include "ldap.labels" . | nindent 8 }}
+      annotations:
+        checksum/component-config: {{ include (print $.Template.BasePath "/component-configmap.yaml") . | sha256sum }}
+        checksum/component-sensitive-config: {{ include (print $.Template.BasePath "/component-sensitive-secret.yaml") . | sha256sum }}
     spec:
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
@@ -29,8 +32,25 @@ spec:
             - /bin/sh
             - -ec
             - |
-              mkdir -p /persistence/db /persistence/config
-              chown -R 100:101 /persistence/db /persistence/config
+              mkdir -p /persistence/db /persistence/config /persistence/local-config
+              chown -R 100:101 /persistence/db /persistence/config /persistence/local-config
+
+              DOGU_VERSION="$(sed -n 's/.*\"Version\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p' /dogu.json | head -n1)"
+              if [ -z "${DOGU_VERSION}" ]; then
+                echo "unable to determine dogu version from /dogu.json" >&2
+                exit 1
+              fi
+
+              HOST_DOGU_DIR="/ces-dogu-json/${HOSTNAME}"
+              mkdir -p "${HOST_DOGU_DIR}"
+              printf '%s' "${DOGU_VERSION}" > "${HOST_DOGU_DIR}/current"
+              cp /dogu.json "${HOST_DOGU_DIR}/${DOGU_VERSION}"
+              chown -R 100:101 /ces-dogu-json
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -41,19 +61,17 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /persistence
+            - name: ces-dogu-json
+              mountPath: /ces-dogu-json
       containers:
         - name: ldap
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: ECOSYSTEM_MULTINODE
+              value: "true"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          env:
-            - name: LDAP_RUNTIME_MODE
-              value: {{ quote .Values.config.runtimeMode }}
-            - name: LDAP_DOMAIN
-              value: {{ quote .Values.config.domain }}
-            - name: OPENLDAP_SUFFIX
-              value: {{ quote .Values.config.suffix }}
           ports:
             - name: ldap
               containerPort: {{ .Values.service.port }}
@@ -77,6 +95,40 @@ spec:
             - name: data
               mountPath: /etc/openldap/slapd.d
               subPath: config
+            - name: data
+              mountPath: /var/ces/config
+              subPath: local-config
+            - name: ces-config
+              mountPath: /etc/ces/config
+              readOnly: true
+            - name: ces-dogu-json
+              mountPath: /etc/ces/dogu_json
+              readOnly: true
+            - name: ces-state
+              mountPath: /var/ces/state
+      volumes:
+        - name: ces-config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Values.globalConfig.configMapName | quote }}
+                  items:
+                    - key: {{ .Values.globalConfig.key | quote }}
+                      path: global/config.yaml
+              - configMap:
+                  name: {{ include "ldap.fullname" . }}-config
+                  items:
+                    - key: config.yaml
+                      path: normal/config.yaml
+              - secret:
+                  name: {{ include "ldap.fullname" . }}-sensitive-config
+                  items:
+                    - key: config.yaml
+                      path: sensitive/config.yaml
+        - name: ces-dogu-json
+          emptyDir: { }
+        - name: ces-state
+          emptyDir: { }
   volumeClaimTemplates:
     - metadata:
         name: data
