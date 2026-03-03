@@ -1,0 +1,57 @@
+global:
+  imagePullSecrets:
+    - name: "ces-container-registries"
+
+replicas: 1
+image:
+  registry: registry.cloudogu.com
+  repository: official/ldap
+  tag: 2.6.8-7
+imagePullPolicy: IfNotPresent
+
+service:
+  port: 389
+
+config:
+  runtimeMode: component
+  domain: cloudogu.local
+  suffix: dc=cloudogu,dc=com
+
+# Placeholder secret references for upcoming phase 5 implementation.
+secrets:
+  adminCredentialsSecretRef:
+    name: ""
+    usernameKey: username
+    passwordKey: password
+  initialUsers:
+    readWriteSecretRef:
+      name: ""
+      usernameKey: username
+      passwordKey: password
+    readOnlySecretRef:
+      name: ""
+      usernameKey: username
+      passwordKey: password
+
+persistence:
+  size: 1Gi
+  storageClassName: ""
+
+podSecurityContext:
+  fsGroup: 101
+
+securityContext:
+  runAsUser: 100
+  runAsGroup: 101
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    memory: 256Mi

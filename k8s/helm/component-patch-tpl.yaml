@@ -1,0 +1,10 @@
+apiVersion: v1
+values:
+  images:
+    ldap: "registry.cloudogu.com/official/ldap:2.6.8-7"
+patches:
+  values.yaml:
+    image:
+      registry: "{{ registryFrom .images.ldap }}"
+      repository: "{{ repositoryFrom .images.ldap }}"
+      tag: "{{ tagFrom .images.ldap }}"
