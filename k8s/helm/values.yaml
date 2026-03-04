@@ -1,17 +1,14 @@
 global:
   imagePullSecrets:
     - name: "ces-container-registries"
-
 replicas: 1
 image:
   registry: registry.cloudogu.com
   repository: k8s/ldap
-  tag: 2.6.8-7
+  tag: 0.0.1
 imagePullPolicy: IfNotPresent
-
 service:
   port: 389
-
 config:
   runtimeMode: component
   domain: cloudogu.local
@@ -34,11 +31,9 @@ config:
   admin_displayname: "admin"
   admin_mail: ""
   openldap_suffix: "dc=cloudogu,dc=com"
-
 globalConfig:
   configMapName: "global-config"
   key: "config.yaml"
-
 secrets:
   adminCredentialsSecretRef:
     name: "ldap-admin-credentials"
@@ -52,14 +47,11 @@ secrets:
       name: ""
       usernameKey: username
       passwordKey: password
-
 persistence:
   size: 1Gi
   storageClassName: ""
-
 podSecurityContext:
   fsGroup: 101
-
 securityContext:
   runAsUser: 100
   runAsGroup: 101
@@ -68,7 +60,6 @@ securityContext:
   capabilities:
     drop:
       - ALL
-
 resources:
   requests:
     cpu: 25m

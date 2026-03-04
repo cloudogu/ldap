@@ -3,3 +3,4 @@
 
 # Allowed files and directories
 !resources
+!dogu.json

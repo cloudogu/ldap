@@ -32,7 +32,14 @@ spec:
             - -ec
             - |
               mkdir -p /persistence/db /persistence/config /persistence/local-config
-              chown -R 100:101 /persistence/db /persistence/config /persistence/local-config
+              if ! chown -R 100:101 /persistence/db /persistence/config /persistence/local-config; then
+                echo "WARN: chown on persistence paths is not permitted; falling back to chmod 0777." >&2
+                chmod -R 0777 /persistence/db /persistence/config /persistence/local-config || true
+              fi
+
+              # Copy immutable image content to a writable volume for non-root runtime.
+              cp -a /etc/openldap/. /openldap-etc/
+              chmod -R 0777 /openldap-etc
 
               DOGU_VERSION="$(sed -n 's/.*\"Version\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p' /dogu.json | head -n1)"
               if [ -z "${DOGU_VERSION}" ]; then
@@ -44,7 +51,7 @@ spec:
               mkdir -p "${HOST_DOGU_DIR}"
               printf '%s' "${DOGU_VERSION}" > "${HOST_DOGU_DIR}/current"
               cp /dogu.json "${HOST_DOGU_DIR}/${DOGU_VERSION}"
-              chown -R 100:101 /ces-dogu-json
+              chown -R 100:101 /ces-dogu-json || true
           env:
             - name: HOSTNAME
               valueFrom:
@@ -60,6 +67,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /persistence
+            - name: openldap-etc
+              mountPath: /openldap-etc
             - name: ces-dogu-json
               mountPath: /ces-dogu-json
       containers:
@@ -96,6 +105,8 @@ spec:
             - name: data
               mountPath: /var/lib/openldap
               subPath: db
+            - name: openldap-etc
+              mountPath: /etc/openldap
             - name: data
               mountPath: /etc/openldap/slapd.d
               subPath: config
@@ -111,6 +122,8 @@ spec:
             - name: ces-state
               mountPath: /var/ces/state
       volumes:
+        - name: openldap-etc
+          emptyDir: {}
         - name: ces-config
           projected:
             sources:
