@@ -248,14 +248,8 @@ setMdbSizeLimit
 
 stopInitDBDaemon
 
-echo "[DOGU] Update password change notification user ..."
-update_pwd_change_notification_user
-
 echo "[DOGU] Setup cron job ..."
 setup_cron
-
-echo "[DOGU] Update password change sender address mapping ..."
-update_email_sender_alias_mapping
 
 # set stage for health check
 doguctl state ready

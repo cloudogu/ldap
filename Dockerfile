@@ -19,6 +19,7 @@ RUN set -eux -o pipefail \
                      openldap-overlay-ppolicy \
                      openldap-overlay-sssvlv \
                      ca-certificates jq openssl tar zip unzip mailx ssmtp \
+                     supercronic \
                      bash \
                      su-exec \
     && rm -rf /var/cache/apk/*

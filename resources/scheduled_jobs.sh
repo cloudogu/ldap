@@ -6,7 +6,7 @@ set -o pipefail
 DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@cloudogu.com"
 
 setup_cron() {
-  local enabled INTERVAL_MINUTES
+  local enabled INTERVAL_MINUTES CRONTAB_FILE
   enabled="$(doguctl config --default "true" "password_change/notification_enabled")"
   if [[ "${enabled}" == "false" ]]; then
     echo "INFO: e-mail notification is disabled"
@@ -22,12 +22,23 @@ setup_cron() {
   echo "use crontab setting ${INTERVAL_MINUTES} * * * *"
   export INTERVAL_MINUTES
 
-  doguctl template /crontab.tpl /crontab
+  CRONTAB_FILE="/tmp/crontab"
+  doguctl template /crontab.tpl "${CRONTAB_FILE}"
+  mkdir -p /tmp/logs
   # empty log file on each restart of the Dogu
   : >/tmp/logs/scheduled_jobs.log
   tail -f /tmp/logs/scheduled_jobs.log &
 
-  if ! crontab /crontab; then
+  if command -v supercronic >/dev/null 2>&1; then
+    if ! supercronic -test "${CRONTAB_FILE}" >/dev/null 2>&1; then
+      echo "WARN: generated crontab is invalid; skip scheduler setup"
+      return
+    fi
+    supercronic -quiet -no-reap "${CRONTAB_FILE}" >>/tmp/logs/scheduled_jobs.log 2>&1 &
+    return
+  fi
+
+  if ! crontab "${CRONTAB_FILE}"; then
     echo "WARN: unable to install crontab in current runtime; skip cron setup"
     return
   fi
@@ -52,48 +63,6 @@ parse_cron_interval() {
     INTERVAL_MINUTES="<invalid>"
   fi
   echo "${INTERVAL_MINUTES}"
-}
-
-update_pwd_change_notification_user() {
-  local mailuser username_from_config
-  mailuser="$(getent passwd mailuser || true)"
-  if [[ $mailuser == "" ]]; then
-    if [[ "$(id -u)" -ne 0 ]]; then
-      echo "WARN: non-root runtime; skip creating mailuser in /etc/passwd"
-      return
-    fi
-    log_debug "create mailuser"
-    adduser -D -u 1111 "mailuser"
-  else
-    log_debug "mailuser already exists"
-  fi
-  if [[ ! -w /etc/passwd ]]; then
-    echo "WARN: /etc/passwd is not writable; skip updating mailuser display name"
-    return
-  fi
-  username_from_config="$(get_mail_sender_name "Change password mailer")"
-  sed -E -i "s/(mailuser.*:)(.*)(,{3}:.*)/\1${username_from_config}\3/g" /etc/passwd
-}
-
-get_mail_sender_name() {
-  local default="$1"
-  doguctl config --default "${default}" "password_change/mail_sender_name"
-}
-
-update_email_sender_alias_mapping() {
-  local MAIL_SENDER_ADDRESS
-  MAIL_SENDER_ADDRESS=$(doguctl config --default "${DEFAULT_MAIL_SENDER_ADDRESS}" password_change/mail_sender_address)
-  if [[ ! "${MAIL_SENDER_ADDRESS}" == "${DEFAULT_MAIL_SENDER_ADDRESS}" && ! "${MAIL_SENDER_ADDRESS}" =~ ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+$ ]]; then
-    log_error "The configured sender e-mail address seems to be invalid. Falling back to default address: ${DEFAULT_MAIL_SENDER_ADDRESS}"
-    MAIL_SENDER_ADDRESS="${DEFAULT_MAIL_SENDER_ADDRESS}"
-  fi
-
-  export MAIL_SENDER_ADDRESS
-  if [[ ! -w /etc/ssmtp/revaliases && ! -w /etc/ssmtp ]]; then
-    echo "WARN: /etc/ssmtp is not writable; skip updating sender alias mapping"
-    return
-  fi
-  doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
 }
 
 log_debug() {

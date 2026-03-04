@@ -13,7 +13,7 @@ config:
   runtimeMode: component
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
-    notification_enabled: "false"
+    notification_enabled: "true"
     check_interval_minutes: "1"
     mail_sender_address: ""
     mail_sender_name: ""
