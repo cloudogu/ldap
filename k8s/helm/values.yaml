@@ -11,10 +11,9 @@ service:
   port: 389
 config:
   runtimeMode: component
-  domain: cloudogu.local
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
-    notification_enabled: "true"
+    notification_enabled: "false"
     check_interval_minutes: "1"
     mail_sender_address: ""
     mail_sender_name: ""

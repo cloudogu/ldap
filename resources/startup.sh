@@ -82,7 +82,9 @@ function startInitDBDaemon {
     echo "Creating ldap socket dir"
     mkdir -p ${OPENLDAP_SOCKET_DIR}
   fi
-  chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+  if [[ "$(id -u)" -eq 0 ]]; then
+    chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+  fi
 
   /usr/sbin/slapd -h ldapi:/// -u ldap -g ldap
   waitForLdapHealth
@@ -109,7 +111,9 @@ function stopInitDBDaemon {
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
-chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+if [[ "$(id -u)" -eq 0 ]]; then
+  chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+fi
 
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
@@ -194,7 +198,9 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
-  chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
+  if [[ "$(id -u)" -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
+    echo "WARN: chown on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing ownership." >&2
+  fi
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
@@ -255,7 +261,9 @@ update_email_sender_alias_mapping
 doguctl state ready
 
 # Make sure permissions are correct
-chmod -R 700 "${OPENLDAP_CONFIG_DIR}"
+if [[ "$(id -u)" -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
+  echo "WARN: chmod on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing permissions." >&2
+fi
 
 echo "Starting ldap..."
 /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

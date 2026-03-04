@@ -28,7 +28,10 @@ EXPOSE 389
 
 COPY --from=ldap-resources / /
 COPY --from=dogu-base /usr/local/bin/doguctl /usr/local/bin/doguctl
-RUN chmod 755 /startup.sh /usr/local/bin/doguctl
+RUN set -eux -o pipefail \
+    && chmod 755 /startup.sh /usr/local/bin/doguctl \
+    && chown -R 100:101 /srv/openldap/ldif.d \
+    && chmod -R ug+rwX /srv/openldap/ldif.d
 
 FROM ldap-common AS component
 

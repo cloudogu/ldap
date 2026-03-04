@@ -27,9 +27,14 @@ setup_cron() {
   : >/tmp/logs/scheduled_jobs.log
   tail -f /tmp/logs/scheduled_jobs.log &
 
-  crontab /crontab
+  if ! crontab /crontab; then
+    echo "WARN: unable to install crontab in current runtime; skip cron setup"
+    return
+  fi
 
-  crond
+  if ! crond; then
+    echo "WARN: unable to start crond in current runtime; continue without scheduler"
+  fi
 }
 
 parse_cron_interval() {
@@ -53,10 +58,18 @@ update_pwd_change_notification_user() {
   local mailuser username_from_config
   mailuser="$(getent passwd mailuser || true)"
   if [[ $mailuser == "" ]]; then
+    if [[ "$(id -u)" -ne 0 ]]; then
+      echo "WARN: non-root runtime; skip creating mailuser in /etc/passwd"
+      return
+    fi
     log_debug "create mailuser"
     adduser -D -u 1111 "mailuser"
   else
     log_debug "mailuser already exists"
+  fi
+  if [[ ! -w /etc/passwd ]]; then
+    echo "WARN: /etc/passwd is not writable; skip updating mailuser display name"
+    return
   fi
   username_from_config="$(get_mail_sender_name "Change password mailer")"
   sed -E -i "s/(mailuser.*:)(.*)(,{3}:.*)/\1${username_from_config}\3/g" /etc/passwd
@@ -76,6 +89,10 @@ update_email_sender_alias_mapping() {
   fi
 
   export MAIL_SENDER_ADDRESS
+  if [[ ! -w /etc/ssmtp/revaliases && ! -w /etc/ssmtp ]]; then
+    echo "WARN: /etc/ssmtp is not writable; skip updating sender alias mapping"
+    return
+  fi
   doguctl template /etc/ssmtp/revaliases.tpl /etc/ssmtp/revaliases
 }
 

@@ -32,8 +32,7 @@ spec:
             - -ec
             - |
               mkdir -p /persistence/db /persistence/config /persistence/local-config
-              if ! chown -R 100:101 /persistence/db /persistence/config /persistence/local-config; then
-                echo "WARN: chown on persistence paths is not permitted; falling back to chmod 0777." >&2
+              if ! chown -R 100:101 /persistence/db /persistence/config /persistence/local-config 2>/dev/null; then
                 chmod -R 0777 /persistence/db /persistence/config /persistence/local-config || true
               fi
 
@@ -51,7 +50,7 @@ spec:
               mkdir -p "${HOST_DOGU_DIR}"
               printf '%s' "${DOGU_VERSION}" > "${HOST_DOGU_DIR}/current"
               cp /dogu.json "${HOST_DOGU_DIR}/${DOGU_VERSION}"
-              chown -R 100:101 /ces-dogu-json || true
+              chown -R 100:101 /ces-dogu-json 2>/dev/null || true
           env:
             - name: HOSTNAME
               valueFrom:
@@ -62,6 +61,9 @@ spec:
             runAsGroup: 0
             allowPrivilegeEscalation: false
             capabilities:
+              add:
+                - CHOWN
+                - FOWNER
               drop:
                 - ALL
           volumeMounts:
