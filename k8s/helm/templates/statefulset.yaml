@@ -16,7 +16,6 @@ spec:
         {{- include "ldap.labels" . | nindent 8 }}
       annotations:
         checksum/component-config: {{ include (print $.Template.BasePath "/component-configmap.yaml") . | sha256sum }}
-        checksum/component-sensitive-config: {{ include (print $.Template.BasePath "/component-sensitive-secret.yaml") . | sha256sum }}
     spec:
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
@@ -70,6 +69,11 @@ spec:
           env:
             - name: ECOSYSTEM_MULTINODE
               value: "true"
+            - name: LDAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "values.secrets.adminCredentialsSecretRef.name is required" .Values.secrets.adminCredentialsSecretRef.name | quote }}
+                  key: {{ required "values.secrets.adminCredentialsSecretRef.passwordKey is required" .Values.secrets.adminCredentialsSecretRef.passwordKey | quote }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
@@ -120,10 +124,7 @@ spec:
                   items:
                     - key: config.yaml
                       path: normal/config.yaml
-              - secret:
-                  name: {{ include "ldap.fullname" . }}-sensitive-config
-                  items:
-                    - key: config.yaml
+                    - key: sensitive-config.yaml
                       path: sensitive/config.yaml
         - name: ces-dogu-json
           emptyDir: { }

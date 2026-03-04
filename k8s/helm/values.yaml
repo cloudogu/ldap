@@ -27,28 +27,21 @@ config:
     root: "INFO"
   user_search_size_limit: "4000"
   max_db_size: "104857600"
-  rootpwd: ""
   admin_username: "admin"
   admin_member: "false"
   admin_givenname: "admin"
   admin_surname: "admin"
   admin_displayname: "admin"
   admin_mail: ""
-  admin_password: ""
   openldap_suffix: "dc=cloudogu,dc=com"
 
 globalConfig:
   configMapName: "global-config"
   key: "config.yaml"
 
-# Sensitive config is rendered into a Kubernetes Secret as /etc/ces/config/sensitive/config.yaml.
-sensitiveConfig: {}
-
-# Placeholder secret references for upcoming phase 5 implementation.
 secrets:
   adminCredentialsSecretRef:
-    name: ""
-    usernameKey: username
+    name: "ldap-admin-credentials"
     passwordKey: password
   initialUsers:
     readWriteSecretRef:

@@ -6,5 +6,6 @@ metadata:
     {{- include "ldap.labels" . | nindent 4 }}
 data:
   config.yaml: |-
-{{- $normalConfig := omit .Values.config "runtimeMode" "domain" }}
-{{ include "ldap.expandSlashKeys" (list $normalConfig) | indent 4 }}
+{{ toYaml .Values.config | indent 4 }}
+  sensitive-config.yaml: |-
+    {}

@@ -181,8 +181,12 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   export ADMIN_MAIL
 
   echo "[DOGU] Get admin password ..."
-  # TODO remove from etcd ???
-  ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
+  if [[ -n "${LDAP_ADMIN_PASSWORD:-}" ]]; then
+    ADMIN_PASSWORD="${LDAP_ADMIN_PASSWORD}"
+  else
+    # Fallback for legacy dogu config when installed as dogu.
+    ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
+  fi
   ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
   export ADMIN_PASSWORD_ENC
 
