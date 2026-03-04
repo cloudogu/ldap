@@ -28,29 +28,7 @@ spec:
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command:
-            - /bin/sh
-            - -ec
-            - |
-              mkdir -p /persistence/db /persistence/config /persistence/local-config
-              if ! chown -R 100:101 /persistence/db /persistence/config /persistence/local-config 2>/dev/null; then
-                chmod -R 0777 /persistence/db /persistence/config /persistence/local-config || true
-              fi
-
-              # Copy immutable image content to a writable volume for non-root runtime.
-              cp -a /etc/openldap/. /openldap-etc/
-              chmod -R 0777 /openldap-etc
-
-              DOGU_VERSION="$(sed -n 's/.*\"Version\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p' /dogu.json | head -n1)"
-              if [ -z "${DOGU_VERSION}" ]; then
-                echo "unable to determine dogu version from /dogu.json" >&2
-                exit 1
-              fi
-
-              HOST_DOGU_DIR="/ces-dogu-json/${HOSTNAME}"
-              mkdir -p "${HOST_DOGU_DIR}"
-              printf '%s' "${DOGU_VERSION}" > "${HOST_DOGU_DIR}/current"
-              cp /dogu.json "${HOST_DOGU_DIR}/${DOGU_VERSION}"
-              chown -R 100:101 /ces-dogu-json 2>/dev/null || true
+            - /component/init-persistence-layout.sh
           env:
             - name: HOSTNAME
               valueFrom:
