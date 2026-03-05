@@ -1,0 +1,144 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+normalize_bool() {
+  case "${1:-}" in
+    true|TRUE|True|1|yes|YES|on|ON) echo "true" ;;
+    *) echo "false" ;;
+  esac
+}
+
+service_account_ou() {
+  case "$1" in
+    rw) echo "Special Users" ;;
+    ro) echo "Bind Users" ;;
+    *)
+      echo "unknown access type '$1' for service account reconciliation" >&2
+      exit 1
+      ;;
+  esac
+}
+
+managed_dns_for_account() {
+  local account_id="$1"
+  local account_ou="$2"
+  # Managed entries are identified by a dedicated description marker per account id.
+  ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// \
+    -b "ou=${account_ou},o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}" \
+    "(description=${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id})" dn 2>/dev/null \
+    | sed -n 's/^dn: //p' || true
+}
+
+entry_exists() {
+  local dn="$1"
+  ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// -b "${dn}" -s base dn >/dev/null 2>&1
+}
+
+delete_dn() {
+  local dn="$1"
+  if entry_exists "${dn}"; then
+    echo "[SERVICE-ACCOUNT] removing '${dn}'"
+    ldapdelete -Q -Y EXTERNAL -H ldapi:/// "${dn}"
+  fi
+}
+
+ensure_removed() {
+  local account_id="$1"
+  local account_ou="$2"
+  local dn
+  while IFS= read -r dn; do
+    [ -z "${dn}" ] && continue
+    delete_dn "${dn}"
+  done < <(managed_dns_for_account "${account_id}" "${account_ou}")
+}
+
+upsert_account() {
+  local account_id="$1"
+  local account_ou="$2"
+  local username="$3"
+  local password="$4"
+  local desired_dn="cn=${username},ou=${account_ou},o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
+  local enc_password
+  local dn
+
+  enc_password="$(slappasswd -s "${password}")"
+
+  # Keep exactly one managed DN per account id. If username changed, old DN is removed.
+  while IFS= read -r dn; do
+    [ -z "${dn}" ] && continue
+    if [[ "${dn}" != "${desired_dn}" ]]; then
+      delete_dn "${dn}"
+    fi
+  done < <(managed_dns_for_account "${account_id}" "${account_ou}")
+
+  if entry_exists "${desired_dn}"; then
+    echo "[SERVICE-ACCOUNT] updating '${desired_dn}'"
+    ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
+dn: ${desired_dn}
+changetype: modify
+replace: userPassword
+userPassword: ${enc_password}
+-
+replace: description
+description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}
+EOF
+  else
+    echo "[SERVICE-ACCOUNT] creating '${desired_dn}'"
+    ldapadd -Q -Y EXTERNAL -H ldapi:/// <<EOF
+dn: ${desired_dn}
+cn: ${username}
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}
+userPassword: ${enc_password}
+EOF
+  fi
+}
+
+reconcile_account() {
+  local account_id="$1"
+  local access_type="$2"
+  local enabled="$3"
+  local account_dir="$4"
+  local account_ou
+  local username=""
+  local password=""
+
+  account_ou="$(service_account_ou "${access_type}")"
+  enabled="$(normalize_bool "${enabled}")"
+
+  # Disabled account => enforce absence in LDAP.
+  if [[ "${enabled}" != "true" ]]; then
+    echo "[SERVICE-ACCOUNT] '${account_id}' disabled; ensure account is removed."
+    ensure_removed "${account_id}" "${account_ou}"
+    return
+  fi
+
+  # Secrets are mounted as files from Kubernetes Secret volumes.
+  if [[ -f "${account_dir}/username" ]]; then
+    username="$(tr -d '\r\n' < "${account_dir}/username")"
+  fi
+  if [[ -f "${account_dir}/password" ]]; then
+    password="$(tr -d '\r\n' < "${account_dir}/password")"
+  fi
+
+  # Missing/empty credentials are treated as desired absence for deterministic reconcile.
+  if [[ -z "${username}" || -z "${password}" ]]; then
+    echo "[SERVICE-ACCOUNT] '${account_id}' secret missing or incomplete; ensure account is removed."
+    ensure_removed "${account_id}" "${account_ou}"
+    return
+  fi
+
+  upsert_account "${account_id}" "${account_ou}" "${username}" "${password}"
+}
+
+LDAP_DOMAIN="$(doguctl config --global domain)"
+OPENLDAP_SUFFIX="$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")"
+LDAP_SA_SECRET_BASE_DIR="${LDAP_SERVICE_ACCOUNT_SECRETS_DIR:-/etc/ces/service-accounts}"
+LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+
+reconcile_account "cas" "rw" "${LDAP_SA_CAS_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/cas"
+reconcile_account "usermgt" "rw" "${LDAP_SA_USERMGT_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/usermgt"
+reconcile_account "ldap-mapper" "ro" "${LDAP_SA_LDAP_MAPPER_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/ldapMapper"

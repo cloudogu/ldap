@@ -246,6 +246,9 @@ installSSSVLVIfNecessary
 increaseUserSearchLimit
 setMdbSizeLimit
 
+echo "[DOGU] Reconcile LDAP service accounts ..."
+/component/reconcile-service-accounts.sh
+
 stopInitDBDaemon
 
 echo "[DOGU] Setup cron job ..."

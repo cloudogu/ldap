@@ -58,6 +58,14 @@ spec:
           env:
             - name: ECOSYSTEM_MULTINODE
               value: "true"
+            - name: LDAP_SERVICE_ACCOUNT_SECRETS_DIR
+              value: /etc/ces/service-accounts
+            - name: LDAP_SA_CAS_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.cas.enabled | toString | quote }}
+            - name: LDAP_SA_USERMGT_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.usermgt.enabled | toString | quote }}
+            - name: LDAP_SA_LDAP_MAPPER_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.ldapMapper.enabled | toString | quote }}
             - name: LDAP_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -101,6 +109,21 @@ spec:
               readOnly: true
             - name: ces-state
               mountPath: /var/ces/state
+            {{- if .Values.secrets.serviceAccounts.cas.enabled }}
+            - name: sa-secret-cas
+              mountPath: /etc/ces/service-accounts/cas
+              readOnly: true
+            {{- end }}
+            {{- if .Values.secrets.serviceAccounts.usermgt.enabled }}
+            - name: sa-secret-usermgt
+              mountPath: /etc/ces/service-accounts/usermgt
+              readOnly: true
+            {{- end }}
+            {{- if .Values.secrets.serviceAccounts.ldapMapper.enabled }}
+            - name: sa-secret-ldap-mapper
+              mountPath: /etc/ces/service-accounts/ldapMapper
+              readOnly: true
+            {{- end }}
       volumes:
         - name: openldap-etc
           emptyDir: {}
@@ -123,6 +146,39 @@ spec:
           emptyDir: { }
         - name: ces-state
           emptyDir: { }
+        {{- if .Values.secrets.serviceAccounts.cas.enabled }}
+        - name: sa-secret-cas
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "cas" .Values.secrets.serviceAccounts.cas) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.cas.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.cas.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
+        {{- if .Values.secrets.serviceAccounts.usermgt.enabled }}
+        - name: sa-secret-usermgt
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "usermgt" .Values.secrets.serviceAccounts.usermgt) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.usermgt.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.usermgt.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
+        {{- if .Values.secrets.serviceAccounts.ldapMapper.enabled }}
+        - name: sa-secret-ldap-mapper
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "ldapMapper" .Values.secrets.serviceAccounts.ldapMapper) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.ldapMapper.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.ldapMapper.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data

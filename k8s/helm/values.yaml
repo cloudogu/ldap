@@ -10,7 +10,6 @@ imagePullPolicy: IfNotPresent
 service:
   port: 389
 config:
-  runtimeMode: component
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
     notification_enabled: "true"
@@ -37,15 +36,30 @@ secrets:
   adminCredentialsSecretRef:
     name: "ldap-admin-credentials"
     passwordKey: password
-  initialUsers:
-    readWriteSecretRef:
-      name: ""
-      usernameKey: username
-      passwordKey: password
-    readOnlySecretRef:
-      name: ""
-      usernameKey: username
-      passwordKey: password
+  serviceAccounts:
+    # For strict GitOps/ArgoCD setups without Helm lookup support, set create=false and
+    # provide externally managed Secrets with the configured name and keys.
+    cas:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-cas-sa"
+        usernameKey: username
+        passwordKey: password
+    usermgt:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-usermgt-sa"
+        usernameKey: username
+        passwordKey: password
+    ldapMapper:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-ldap-mapper-sa"
+        usernameKey: username
+        passwordKey: password
 persistence:
   size: 1Gi
   storageClassName: ""
