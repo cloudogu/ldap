@@ -5,7 +5,7 @@ replicas: 1
 image:
   registry: registry.cloudogu.com
   repository: k8s/ldap
-  tag: 0.0.1
+  tag: 2.6.8-7
 imagePullPolicy: IfNotPresent
 service:
   port: 389

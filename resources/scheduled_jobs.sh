@@ -3,8 +3,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@cloudogu.com"
-
 setup_cron() {
   local enabled INTERVAL_MINUTES CRONTAB_FILE
   enabled="$(doguctl config --default "true" "password_change/notification_enabled")"

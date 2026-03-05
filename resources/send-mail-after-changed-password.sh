@@ -41,6 +41,7 @@ LDAP_MAIL_ATTR=mail
 
 # Configuration of mail
 MAIL_BIN="mail"
+DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@cloudogu.com"
 
 DEFAULT_MAIL_SUBJECT="Your password has been changed"
 MAIL_SUBJECT="$(doguctl config --default "${DEFAULT_MAIL_SUBJECT}" "password_change/mail_subject")"
