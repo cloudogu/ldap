@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- [#69] release LDAP also as a component that can be used in LOP-IdP
+- [#69] Release LDAP additionally as a Helm-based component for usage in LOP-IdP.
+- [#69] Add component chart resources (`Chart.yaml`, `values.yaml`, StatefulSet, Service, ConfigMap, component patch template).
+- [#69] Add configurable service-account Secret support for `cas` (RW), `usermgt` (RW), and `ldapMapper` (RO), including startup reconciliation.
+
+### Changed
+- [#69] Consolidate build and development workflow into one central `Makefile` with dedicated dogu and component targets.
+- [#69] Extend Jenkins pipeline with component build, test, k3d smoke test, and release publishing stages (component image and chart).
+- [#69] Replace `crond` with `supercronic` for password-change notification scheduling to support non-root runtime.
+- [#69] Send password-change notification mails without `mailuser`/`revaliases`; sender is configured directly via config values.
 
 ## [v2.6.8-7] - 2026-02-18
 ### Fixed
