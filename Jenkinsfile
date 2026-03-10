@@ -1,6 +1,6 @@
 #!groovy
 @Library([
-  'pipe-build-lib',
+  'pipe-build-lib@test-release',
   'ces-build-lib',
   'dogu-build-lib'
 ]) _
@@ -26,9 +26,20 @@ def componentRegistryNamespace = "k8s"
 def componentChartTargetDir = "target/k8s/helm"
 def componentBuildImageRepository = "registry.cloudogu.com/k8s/ldap"
 def componentReleaseName = "lop-idp-ldap"
+def goVersion = "1.26.0"
 
 pipe.setBuildProperties()
 pipe.addDefaultStages()
+
+def runMakeInGoContainer = { target ->
+    new com.cloudogu.ces.cesbuildlib.Docker(this)
+        .image("golang:${goVersion}")
+        .mountJenkinsUser()
+        .inside("--volume ${WORKSPACE}:/workdir -w /workdir") {
+            sh "make ${target}"
+        }
+}
+
 pipe.overrideStage('Bats Tests') {
     def bats_base_image = "bats/bats"
     def bats_custom_image = "cloudogu/bats"
@@ -46,19 +57,17 @@ pipe.overrideStage('Bats Tests') {
     }
 }
 
-// Run component build/test in a dedicated parallel stage group.
-// Use a separate label expression string so the group key differs from the
-// default multinode group while still targeting the same agent pool.
-def componentAgentLabel = "${pipe.agentMultinode} || ${pipe.agentMultinode}"
-pipe.addStageGroup(componentAgentLabel) { group ->
+def componentStages = { group ->
     group.stage('Component Checkout') {
         checkout scm
     }
     group.stage('Component Build') {
-        sh "make component-build"
+        docker.withRegistry('https://registry.cloudogu.com/', 'cesmarvin-setup') {
+            sh "make component-build"
+        }
     }
     group.stage('Component Test') {
-        sh "make component-test"
+        runMakeInGoContainer("component-test")
     }
     group.stage('Component Smoke Test (k3d)') {
         K3d k3d = new K3d(this, "${WORKSPACE}", "${WORKSPACE}/k3d", env.PATH)
@@ -76,7 +85,7 @@ pipe.addStageGroup(componentAgentLabel) { group ->
             k3d.kubectl("create secret generic ldap-admin-credentials --from-literal=password='admin'")
 
             echo "[Component k3d] Generate helm chart"
-            sh "make component-helm-generate"
+            runMakeInGoContainer("component-helm-generate")
 
             echo "[Component k3d] Retag image for local smoke test"
             sh "docker tag ${componentBuildImageRepository}:${releaseVersion} local-smoke/ldap:${releaseVersion}"
@@ -98,6 +107,8 @@ pipe.addStageGroup(componentAgentLabel) { group ->
         }
     }
 }
+
+pipe.addStageGroup('component', pipe.agentMultinode, componentStages)
 
 if (pipe.gitflow.isReleaseBranch()) {
     pipe.insertStageAfter('Push Dogu to registry', 'Push Component Chart to Harbor') {
