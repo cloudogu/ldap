@@ -61,14 +61,17 @@ def componentStages = { group ->
     group.stage('Component Checkout') {
         checkout scm
     }
+
     group.stage('Component Build') {
         docker.withRegistry('https://registry.cloudogu.com/', 'cesmarvin-setup') {
             sh "make component-build"
         }
     }
+
     group.stage('Component Test') {
         runMakeInGoContainer("component-test")
     }
+
     group.stage('Component Smoke Test (k3d)') {
         K3d k3d = new K3d(this, "${WORKSPACE}", "${WORKSPACE}/k3d", env.PATH)
         Makefile makefile = new Makefile(this)
@@ -106,24 +109,46 @@ def componentStages = { group ->
             k3d.deleteK3d()
         }
     }
+
+     if (pipe.gitflow.isReleaseBranch()) {
+        group.stage('Push Component Image') {
+            Makefile makefile = new Makefile(this)
+            String releaseVersion = makefile.getVersion().trim()
+            docker.withRegistry('https://registry.cloudogu.com/', 'cesmarvin-setup') {
+                sh "docker push ${componentBuildImageRepository}:${releaseVersion}"
+            }
+        }
+
+        group.stage('Push Component Chart to Harbor') {
+            sh "make component-helm-package"
+
+            def componentChartFile = sh(returnStdout: true, script: "ls -1t ${componentChartTargetDir}/*.tgz 2>/dev/null | head -n 1").trim()
+            if (!componentChartFile) {
+                error("No packaged component chart found in ${componentChartTargetDir}")
+            }
+
+            withCredentials([usernamePassword(credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
+                sh ".bin/helm registry login ${componentRegistry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
+                sh ".bin/helm push ${componentChartFile} oci://${componentRegistry}/${componentRegistryNamespace}/"
+                sh ".bin/helm registry logout ${componentRegistry}"
+            }
+        }
+    }
 }
 
 pipe.addStageGroup('component', pipe.agentMultinode, componentStages)
 
 if (pipe.gitflow.isReleaseBranch()) {
-    pipe.insertStageAfter('Push Dogu to registry', 'Push Component Chart to Harbor') {
-        sh "make component-helm-package"
-
-        def componentChartFile = sh(returnStdout: true, script: "ls -1t ${componentChartTargetDir}/*.tgz 2>/dev/null | head -n 1").trim()
-        if (!componentChartFile) {
-            error("No packaged component chart found in ${componentChartTargetDir}")
-        }
-
-        withCredentials([usernamePassword(credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
-            sh ".bin/helm registry login ${componentRegistry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
-            sh ".bin/helm push ${componentChartFile} oci://${componentRegistry}/${componentRegistryNamespace}/"
-            sh ".bin/helm registry logout ${componentRegistry}"
-        }
+    // Temporary release-artifacts-only mode:
+    // keep publishing stages, but skip gitflow merge/tag finalization and notifications.
+    pipe.overrideStage('Finish Release') {
+        echo "Skipping 'Finish Release' (release-artifacts-only test mode)."
+    }
+    pipe.overrideStage('Add Github-Release') {
+        echo "Skipping 'Add Github-Release' (release-artifacts-only test mode)."
+    }
+    pipe.overrideStage('Notfiy Webhook - Release') {
+        echo "Skipping 'Notfiy Webhook - Release' (release-artifacts-only test mode)."
     }
 }
 

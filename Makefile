@@ -24,6 +24,10 @@ default: dogu-release
 
 ##@ CI / Release
 
+.PHONY: dogu-release
+dogu-release: ## Start gitflow release with dogu makefile (and release_args.sh hooks).
+	$(call run_dogu,dogu-release)
+
 .PHONY: ci-dogu
 ci-dogu: dogu-build dogu-test ## Run dogu CI build and test targets.
 
@@ -37,7 +41,7 @@ ci: ci-dogu ci-component ## Run CI targets for dogu and component.
 component-release: component-helm-package ## Package Helm chart for component release.
 
 .PHONY: release
-release: dogu-release component-release ## Run release targets for both artifacts.
+release: dogu-release ## Start combined gitflow release for dogu + component files.
 
 ##@ Dogu
 
