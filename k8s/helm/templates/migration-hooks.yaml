@@ -1,0 +1,220 @@
+{{- $fullName := include "ldap.fullname" . -}}
+{{- $hookServiceAccount := printf "%s-migration-hook" $fullName -}}
+{{- $scriptsConfigMapName := printf "%s-migration-scripts" $fullName -}}
+{{- $sourcePVCName := "ldap" -}}
+{{- $targetPVCName := printf "data-%s-0" $fullName -}}
+{{- $targetSelector := printf "app.kubernetes.io/instance=%s,app.kubernetes.io/name=%s" .Release.Name (include "ldap.name" .) -}}
+{{- $hookImage := printf "%s:%s" .Values.migration.hook.image.repository .Values.migration.hook.image.tag -}}
+{{- $hookImagePullPolicy := .Values.migration.hook.image.pullPolicy -}}
+{{- $hookWaitTimeoutSeconds := .Values.migration.hook.waitTimeoutSeconds -}}
+{{- $hookBackoffLimit := .Values.migration.hook.backoffLimit -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $hookServiceAccount }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-20"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $hookServiceAccount }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-20"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - get
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets/scale
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - k8s.cloudogu.com
+    resources:
+      - dogus
+    verbs:
+      - get
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $hookServiceAccount }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-20"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+subjects:
+  - kind: ServiceAccount
+    name: {{ $hookServiceAccount }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $hookServiceAccount }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $scriptsConfigMapName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-19"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+data:
+  common.sh: |
+{{ .Files.Get "files/migration/common.sh" | indent 4 }}
+  01-stop-source-and-prepare-target.sh: |
+{{ .Files.Get "files/migration/01-stop-source-and-prepare-target.sh" | indent 4 }}
+  02-migrate-and-start-component.sh: |
+{{ .Files.Get "files/migration/02-migrate-and-start-component.sh" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-migration-stop-source" $fullName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $hookBackoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ldap.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $hookServiceAccount }}
+      restartPolicy: Never
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: migration-scripts
+          configMap:
+            name: {{ $scriptsConfigMapName }}
+            defaultMode: 0555
+      containers:
+        - name: migration-stop-source
+          image: {{ $hookImage | quote }}
+          imagePullPolicy: {{ $hookImagePullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - /scripts/01-stop-source-and-prepare-target.sh
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TARGET_STATEFULSET_NAME
+              value: {{ $fullName | quote }}
+            - name: TARGET_POD_SELECTOR
+              value: {{ $targetSelector | quote }}
+            - name: WAIT_TIMEOUT_SECONDS
+              value: {{ $hookWaitTimeoutSeconds | quote }}
+          volumeMounts:
+            - name: migration-scripts
+              mountPath: /scripts
+              readOnly: true
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-migration-copy-and-start" $fullName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $hookBackoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ldap.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $hookServiceAccount }}
+      restartPolicy: Never
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        runAsNonRoot: true
+      volumes:
+        - name: migration-scripts
+          configMap:
+            name: {{ $scriptsConfigMapName }}
+            defaultMode: 0555
+        - name: source-dogu-volume
+          persistentVolumeClaim:
+            claimName: {{ $sourcePVCName | quote }}
+        - name: target-component-volume
+          persistentVolumeClaim:
+            claimName: {{ $targetPVCName | quote }}
+      containers:
+        - name: migration-copy-and-start
+          image: {{ $hookImage | quote }}
+          imagePullPolicy: {{ $hookImagePullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - /scripts/02-migrate-and-start-component.sh
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TARGET_STATEFULSET_NAME
+              value: {{ $fullName | quote }}
+            - name: TARGET_REPLICAS
+              value: {{ .Values.replicas | quote }}
+            - name: SOURCE_VOLUME_PATH
+              value: /source
+            - name: TARGET_VOLUME_PATH
+              value: /target
+          volumeMounts:
+            - name: migration-scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: source-dogu-volume
+              mountPath: /source
+              readOnly: true
+            - name: target-component-volume
+              mountPath: /target

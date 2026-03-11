@@ -82,3 +82,11 @@ resources:
     memory: 128Mi
   limits:
     memory: 256Mi
+migration:
+  hook:
+    image:
+      repository: docker.io/alpine/kubectl
+      tag: "1.35.2"
+      pullPolicy: IfNotPresent
+    waitTimeoutSeconds: 300
+    backoffLimit: 0
