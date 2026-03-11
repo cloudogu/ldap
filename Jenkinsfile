@@ -1,6 +1,6 @@
 #!groovy
 @Library([
-  'pipe-build-lib@feature/15-use-a-dedicated-name-for-stage-groups',
+  'pipe-build-lib',
   'ces-build-lib',
   'dogu-build-lib'
 ]) _
