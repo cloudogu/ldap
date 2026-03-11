@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#69] Release LDAP additionally as a Helm-based component for usage in LOP-IdP.
     - Add component chart resources (`Chart.yaml`, `values.yaml`, StatefulSet, Service, ConfigMap, component patch template).
     - Add configurable service-account Secret support for `cas` (RW), `usermgt` (RW), and `ldapMapper` (RO), including startup reconciliation.
+- [#71] Add migration of ldap-data from dogu to component
 
 ### Changed
 - [#69] Consolidate build and development workflow into one central `Makefile` with dedicated dogu and component targets.
