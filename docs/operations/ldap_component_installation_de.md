@@ -62,8 +62,8 @@ kubectl apply -f ldap-admin-credentials.yaml
 `helm-apply` / `helm-delete` (Helm-Release):
 
 ```bash
-make -f make/component.mk VERSION=<version> helm-apply
-make -f make/component.mk VERSION=<version> helm-delete
+make helm-apply
+make helm-delete
 ```
 
 `component-apply` / `component-delete` (Komponenten-CR):
@@ -182,6 +182,7 @@ secrets:
 ## 5. Deinstallation
 
 ```bash
+make helm-delete
 make component-delete
 ```
 
