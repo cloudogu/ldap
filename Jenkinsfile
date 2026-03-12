@@ -24,7 +24,7 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
 def componentRegistry = "registry.cloudogu.com"
 def componentRegistryNamespace = "k8s"
 def componentChartTargetDir = "target/k8s/helm"
-def componentBuildImageRepository = "registry.cloudogu.com/k8s/ldap"
+def componentBuildImageRepository = "registry.cloudogu.com/official/ldap"
 def componentReleaseName = "lop-idp-ldap"
 def goVersion = "1.26.0"
 
@@ -63,13 +63,14 @@ def componentStages = { group ->
     }
 
     group.stage('Component Build') {
+        runMakeInGoContainer("install-yq")
         docker.withRegistry('https://registry.cloudogu.com/', 'cesmarvin-setup') {
-            sh "make component-build"
+            sh "make docker-build"
         }
     }
 
     group.stage('Component Test') {
-        runMakeInGoContainer("component-test")
+        runMakeInGoContainer("helm-lint")
     }
 
     group.stage('Component Smoke Test (k3d)') {
@@ -88,7 +89,7 @@ def componentStages = { group ->
             k3d.kubectl("create secret generic ldap-admin-credentials --from-literal=password='admin'")
 
             echo "[Component k3d] Generate helm chart"
-            runMakeInGoContainer("component-helm-generate")
+            runMakeInGoContainer("helm-generate")
 
             echo "[Component k3d] Retag image for local smoke test"
             sh "docker tag ${componentBuildImageRepository}:${releaseVersion} local-smoke/ldap:${releaseVersion}"
@@ -111,16 +112,8 @@ def componentStages = { group ->
     }
 
      if (pipe.gitflow.isReleaseBranch()) {
-        group.stage('Push Component Image') {
-            Makefile makefile = new Makefile(this)
-            String releaseVersion = makefile.getVersion().trim()
-            docker.withRegistry('https://registry.cloudogu.com/', 'cesmarvin-setup') {
-                sh "docker push ${componentBuildImageRepository}:${releaseVersion}"
-            }
-        }
-
         group.stage('Push Component Chart to Harbor') {
-            sh "make component-helm-package"
+            sh "make helm-package"
 
             def componentChartFile = sh(returnStdout: true, script: "ls -1t ${componentChartTargetDir}/*.tgz 2>/dev/null | head -n 1").trim()
             if (!componentChartFile) {
@@ -137,19 +130,5 @@ def componentStages = { group ->
 }
 
 pipe.addStageGroup('component', pipe.agentMultinode, componentStages)
-
-if (pipe.gitflow.isReleaseBranch()) {
-    // Temporary release-artifacts-only mode:
-    // keep publishing stages, but skip gitflow merge/tag finalization and notifications.
-    pipe.overrideStage('Finish Release') {
-        echo "Skipping 'Finish Release' (release-artifacts-only test mode)."
-    }
-    pipe.overrideStage('Add Github-Release') {
-        echo "Skipping 'Add Github-Release' (release-artifacts-only test mode)."
-    }
-    pipe.overrideStage('Notfiy Webhook - Release') {
-        echo "Skipping 'Notfiy Webhook - Release' (release-artifacts-only test mode)."
-    }
-}
 
 pipe.run()

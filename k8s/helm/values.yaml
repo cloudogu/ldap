@@ -4,7 +4,7 @@ global:
 replicas: 1
 image:
   registry: registry.cloudogu.com
-  repository: k8s/ldap
+  repository: official/ldap
   tag: 2.6.8-7
 imagePullPolicy: IfNotPresent
 service:

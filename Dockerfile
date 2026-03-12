@@ -34,14 +34,6 @@ RUN set -eux -o pipefail \
     && chown -R 100:101 /srv/openldap/ldif.d \
     && chmod -R ug+rwX /srv/openldap/ldif.d
 
-FROM ldap-common AS component
-
-LABEL NAME="k8s/ldap" \
-      VERSION="2.6.8-7" \
-      maintainer="hello@cloudogu.com"
-HEALTHCHECK CMD ldapsearch -x -H ldap://127.0.0.1:389 -b "" -s base >/dev/null 2>&1 || exit 1
-CMD ["/startup.sh"]
-
 FROM ldap-common AS dogu
 
 LABEL NAME="official/ldap" \
