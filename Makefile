@@ -1,6 +1,6 @@
 # Central configuration for both build paths.
 VERSION=2.6.8-7
-MAKEFILES_VERSION=10.5.0
+MAKEFILES_VERSION=10.7.0
 ARTIFACT_ID=ldap
 COMPONENT_ARTIFACT_ID=lop-idp-ldap
 
