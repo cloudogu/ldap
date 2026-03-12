@@ -5,10 +5,12 @@
 SOURCE_DOGU_NAME="ldap"
 WAIT_TIMEOUT_SECONDS="${WAIT_TIMEOUT_SECONDS:-300}"
 SOURCE_DB_SUBPATH="db"
-SOURCE_CONFIG_SUBPATH="config"
 TARGET_DB_SUBPATH="db"
-TARGET_CONFIG_SUBPATH="config"
-MIGRATION_MARKER_FILENAME=".ldap-component-migration-done"
+MIGRATION_PHASE_PENDING="pending"
+MIGRATION_PHASE_RUNNING="running"
+MIGRATION_PHASE_DONE="done"
+MIGRATION_PHASE_FAILED="failed"
+MIGRATION_PHASE_SKIPPED_NO_SOURCE="skipped_no_source"
 
 log() {
   echo "[${LOG_PREFIX:-MIGRATION}] $*"
@@ -27,30 +29,14 @@ require_env() {
   fi
 }
 
-select_running_source_pod() {
-  k get pods -l "dogu.name=${SOURCE_DOGU_NAME}" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"\n"}{end}' \
-    | awk '$2=="Running" || $2=="Pending"{print $1; exit}'
+get_migration_phase() {
+  k get "configmap/${COMPONENT_CONFIGMAP_NAME}" -o jsonpath='{.data.migrationPhase}' 2>/dev/null || true
 }
 
-migration_marker_path() {
-  printf '%s/%s' "${TARGET_VOLUME_PATH}" "${MIGRATION_MARKER_FILENAME}"
-}
-
-is_migration_done() {
-  marker_file="$(migration_marker_path)"
-  [ -f "${marker_file}" ]
-}
-
-write_migration_marker() {
-  marker_file="$(migration_marker_path)"
-  mkdir -p "$(dirname "${marker_file}")"
-  {
-    printf 'version=1\n'
-    printf 'created_at_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    printf 'release=%s\n' "${RELEASE_NAME:-unknown}"
-    printf 'namespace=%s\n' "${NAMESPACE:-unknown}"
-    printf 'reason=%s\n' "${1:-migrated}"
-  } > "${marker_file}"
+set_migration_phase() {
+  phase="$1"
+  k patch "configmap/${COMPONENT_CONFIGMAP_NAME}" --type merge \
+    -p "{\"data\":{\"migrationPhase\":\"${phase}\"}}" >/dev/null
 }
 
 wait_for_no_pods_by_selector() {

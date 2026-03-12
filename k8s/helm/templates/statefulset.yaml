@@ -184,7 +184,8 @@ spec:
     - metadata:
         name: data
         labels:
-          {{- include "ldap.labels" . | nindent 10 }}
+          app: ces
+          {{- include "ldap.selectorLabels" . | nindent 10 }}
       spec:
         accessModes:
           - ReadWriteOnce

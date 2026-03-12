@@ -1,13 +1,30 @@
+{{- /* Hook resource names */ -}}
 {{- $fullName := include "ldap.fullname" . -}}
 {{- $hookServiceAccount := printf "%s-migration-hook" $fullName -}}
 {{- $scriptsConfigMapName := printf "%s-migration-scripts" $fullName -}}
+{{- $componentConfigMapName := printf "%s-config" $fullName -}}
+
+{{- /* Fixed source/target PVC names for the current migration flow */ -}}
 {{- $sourcePVCName := "ldap" -}}
 {{- $targetPVCName := printf "data-%s-0" $fullName -}}
+
+{{- /* Migration phase is stored in the existing component configmap */ -}}
+{{- $componentConfigMap := lookup "v1" "ConfigMap" .Release.Namespace $componentConfigMapName -}}
+{{- $migrationPhase := "" -}}
+{{- if and $componentConfigMap $componentConfigMap.data (hasKey $componentConfigMap.data "migrationPhase") -}}
+{{- $migrationPhase = index $componentConfigMap.data "migrationPhase" -}}
+{{- end -}}
+{{- $migrationFinished := or (eq $migrationPhase "done") (eq $migrationPhase "skipped_no_source") -}}
+
+{{- /* Runtime values for the hook jobs */ -}}
 {{- $targetSelector := printf "app.kubernetes.io/instance=%s,app.kubernetes.io/name=%s" .Release.Name (include "ldap.name" .) -}}
 {{- $hookImage := printf "%s:%s" .Values.migration.hook.image.repository .Values.migration.hook.image.tag -}}
 {{- $hookImagePullPolicy := .Values.migration.hook.image.pullPolicy -}}
 {{- $hookWaitTimeoutSeconds := .Values.migration.hook.waitTimeoutSeconds -}}
 {{- $hookBackoffLimit := .Values.migration.hook.backoffLimit -}}
+
+{{- /* Render hooks only when migration is enabled and migration is not finished */ -}}
+{{- if and .Values.migration.enabled (not $migrationFinished) }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -30,6 +47,14 @@ metadata:
     helm.sh/hook-weight: "-20"
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+      - patch
   - apiGroups:
       - ""
     resources:
@@ -138,6 +163,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: COMPONENT_CONFIGMAP_NAME
+              value: {{ $componentConfigMapName | quote }}
             - name: TARGET_STATEFULSET_NAME
               value: {{ $fullName | quote }}
             - name: TARGET_POD_SELECTOR
@@ -201,6 +228,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: COMPONENT_CONFIGMAP_NAME
+              value: {{ $componentConfigMapName | quote }}
             - name: TARGET_STATEFULSET_NAME
               value: {{ $fullName | quote }}
             - name: TARGET_REPLICAS
@@ -218,3 +247,4 @@ spec:
               readOnly: true
             - name: target-component-volume
               mountPath: /target
+{{- end }}
