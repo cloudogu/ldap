@@ -38,6 +38,15 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 {{- end -}}
 
+{{- define "ldap.initialAdminPasswordSecretName" -}}
+{{- $root := . -}}
+{{- if $root.Values.secrets.initialAdminPasswordSecretRef.name -}}
+{{- $root.Values.secrets.initialAdminPasswordSecretRef.name -}}
+{{- else -}}
+{{- printf "%s-initial-admin-password" (include "ldap.fullname" $root) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "ldap.renderServiceAccountSecret" -}}
 {{- $root := .root -}}
 {{- $accountKey := .accountKey -}}

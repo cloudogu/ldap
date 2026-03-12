@@ -33,8 +33,11 @@ globalConfig:
   configMapName: "global-config"
   key: "config.yaml"
 secrets:
-  adminCredentialsSecretRef:
-    name: "ldap-admin-credentials"
+  # Initial password for the LDAP admin user under ou=People.
+  # This value is only used during first initialization of the LDAP data.
+  initialAdminPasswordSecretRef:
+    create: true
+    name: ""
     passwordKey: password
   serviceAccounts:
     # For strict GitOps/ArgoCD setups without Helm lookup support, set create=false and
