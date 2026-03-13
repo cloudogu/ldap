@@ -75,7 +75,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
             - name: ldap
-              containerPort: {{ .Values.service.port }}
+              containerPort: 389
               protocol: TCP
           livenessProbe:
             tcpSocket:

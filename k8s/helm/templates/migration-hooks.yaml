@@ -169,6 +169,10 @@ spec:
               value: {{ $fullName | quote }}
             - name: TARGET_POD_SELECTOR
               value: {{ $targetSelector | quote }}
+            - name: TARGET_GLOBAL_CONFIGMAP_NAME
+              value: {{ .Values.globalConfig.configMapName | quote }}
+            - name: TARGET_GLOBAL_CONFIGMAP_KEY
+              value: {{ .Values.globalConfig.key | quote }}
             - name: WAIT_TIMEOUT_SECONDS
               value: {{ $hookWaitTimeoutSeconds | quote }}
           volumeMounts:

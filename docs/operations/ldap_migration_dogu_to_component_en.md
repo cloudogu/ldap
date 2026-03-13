@@ -46,6 +46,7 @@ Important:
 - the LDAP component creates its own configuration,
 - the migration copies only the actual LDAP data afterwards,
 - the runtime path `run` is not copied.
+- before the actual cutover, the migration validates that dogu and component use the same essential LDAP configuration.
 
 ## How the Migration Works Technically
 
@@ -60,6 +61,7 @@ Important:
 There are two hook jobs:
 
 1. `*-migration-stop-source`
+   - validates the essential dogu and component configuration before the cutover,
    - sets the LDAP dogu to `spec.stopped=true`,
    - waits until the LDAP dogu pods are terminated,
    - then sets `spec.pauseReconciliation=true`,
@@ -76,6 +78,13 @@ If the second job fails:
 - the migration status is set to `failed`,
 - the LDAP dogu is started again,
 - `pauseReconciliation` is reset to `false`.
+
+The configuration validation currently enforces these values as hard prerequisites:
+
+- `domain`
+- `openldap_suffix`
+
+If either value differs, the migration is aborted before the LDAP dogu is stopped.
 
 ## Migration Status
 

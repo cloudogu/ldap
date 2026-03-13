@@ -11,6 +11,8 @@ require_env "NAMESPACE"
 require_env "COMPONENT_CONFIGMAP_NAME"
 require_env "TARGET_STATEFULSET_NAME"
 require_env "TARGET_POD_SELECTOR"
+require_env "TARGET_GLOBAL_CONFIGMAP_NAME"
+require_env "TARGET_GLOBAL_CONFIGMAP_KEY"
 
 cleanup_on_error() {
   rc="$?"
@@ -23,6 +25,9 @@ cleanup_on_error() {
 trap cleanup_on_error EXIT
 
 set_migration_phase "${MIGRATION_PHASE_RUNNING}"
+
+log "Validate source and target LDAP configuration."
+validate_migration_configuration "${TARGET_GLOBAL_CONFIGMAP_NAME}" "${TARGET_GLOBAL_CONFIGMAP_KEY}"
 
 log "Stopping source LDAP dogu '${SOURCE_DOGU_NAME}'."
 k patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"stopped":true}}' >/dev/null
