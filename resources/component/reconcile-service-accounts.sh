@@ -3,13 +3,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-normalize_bool() {
-  case "${1:-}" in
-    true|TRUE|True|1|yes|YES|on|ON) echo "true" ;;
-    *) echo "false" ;;
-  esac
-}
-
 service_account_ou() {
   case "$1" in
     rw) echo "Special Users" ;;
@@ -24,6 +17,7 @@ service_account_ou() {
 managed_dns_for_account() {
   local account_id="$1"
   local account_ou="$2"
+  # `account_id` is the stable logical identifier (cas/usermgt/ldap-mapper), independent of username.
   # Managed entries are identified by a dedicated description marker per account id.
   ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// \
     -b "ou=${account_ou},o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}" \
@@ -48,6 +42,7 @@ ensure_removed() {
   local account_id="$1"
   local account_ou="$2"
   local dn
+  # `IFS=` here is scoped to the `read` builtin invocation and does not modify global IFS.
   while IFS= read -r dn; do
     [ -z "${dn}" ] && continue
     delete_dn "${dn}"
@@ -66,6 +61,7 @@ upsert_account() {
   enc_password="$(slappasswd -s "${password}")"
 
   # Keep exactly one managed DN per account id. If username changed, old DN is removed.
+  # `IFS=` here is scoped to the `read` builtin invocation and does not modify global IFS.
   while IFS= read -r dn; do
     [ -z "${dn}" ] && continue
     if [[ "${dn}" != "${desired_dn}" ]]; then
@@ -106,8 +102,11 @@ reconcile_account() {
   local username=""
   local password=""
 
+  # Reconcile algorithm:
+  # 1) Resolve desired state from feature flag + secret files.
+  # 2) If disabled or credentials missing: remove all LDAP entries for this account_id marker.
+  # 3) If enabled + complete credentials: ensure exactly one DN with current credentials exists.
   account_ou="$(service_account_ou "${access_type}")"
-  enabled="$(normalize_bool "${enabled}")"
 
   # Disabled account => enforce absence in LDAP.
   if [[ "${enabled}" != "true" ]]; then
