@@ -40,23 +40,6 @@ def runMakeInGoContainer = { target ->
         }
 }
 
-pipe.overrideStage('Bats Tests') {
-    def bats_base_image = "bats/bats"
-    def bats_custom_image = "cloudogu/bats"
-    def bats_tag = "1.2.1"
-
-    def batsImage = docker.build("${bats_custom_image}:${bats_tag}", "--build-arg=BATS_BASE_IMAGE=${bats_base_image} --build-arg=BATS_TAG=${bats_tag} ./unitTests")
-    try {
-        sh "mkdir -p target"
-
-        batsContainer = batsImage.inside("--entrypoint='' -v ${WORKSPACE}:/workspace") {
-            sh "make unit-test-shell-ci"
-        }
-    } finally {
-        junit allowEmptyResults: true, testResults: 'target/shell_test_reports/*.xml'
-    }
-}
-
 def componentStages = { group ->
     group.stage('Component Checkout') {
         checkout scm

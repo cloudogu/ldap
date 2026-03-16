@@ -23,7 +23,7 @@ include build/make/prerelease.mk
 include build/make/clean.mk
 include build/make/k8s-dogu.mk
 include build/make/k8s-component.mk
-include bats.mk
+include build/make/bats.mk
 
 .PHONY: helm-values-update-image-version
 helm-values-update-image-version: $(BINARY_YQ)
