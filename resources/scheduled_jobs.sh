@@ -27,23 +27,13 @@ setup_cron() {
   : >/tmp/logs/scheduled_jobs.log
   tail -f /tmp/logs/scheduled_jobs.log &
 
-  if command -v supercronic >/dev/null 2>&1; then
-    if ! supercronic -test "${CRONTAB_FILE}" >/dev/null 2>&1; then
-      echo "WARN: generated crontab is invalid; skip scheduler setup"
-      return
-    fi
-    supercronic -quiet -no-reap "${CRONTAB_FILE}" >>/tmp/logs/scheduled_jobs.log 2>&1 &
-    return
+  # supercronic is part of the image and is the only supported scheduler here.
+  if ! supercronic -test "${CRONTAB_FILE}" >/dev/null 2>&1; then
+    log_error "generated crontab is invalid; cannot start scheduler"
+    return 1
   fi
 
-  if ! crontab "${CRONTAB_FILE}"; then
-    echo "WARN: unable to install crontab in current runtime; skip cron setup"
-    return
-  fi
-
-  if ! crond; then
-    echo "WARN: unable to start crond in current runtime; continue without scheduler"
-  fi
+  supercronic -quiet -no-reap "${CRONTAB_FILE}" >>/tmp/logs/scheduled_jobs.log 2>&1 &
 }
 
 parse_cron_interval() {
