@@ -125,6 +125,7 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        # Recreated on each Pod start; init container repopulates it from image /etc/openldap.
         - name: openldap-etc
           emptyDir: {}
         - name: ces-config

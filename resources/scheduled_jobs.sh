@@ -4,7 +4,7 @@ set -o nounset
 set -o pipefail
 
 setup_cron() {
-  local enabled INTERVAL_MINUTES CRONTAB_FILE
+  local enabled INTERVAL_MINUTES CRONTAB_FILE LOG_DIR LOG_FILE
   enabled="$(doguctl config --default "true" "password_change/notification_enabled")"
   if [[ "${enabled}" == "false" ]]; then
     echo "INFO: e-mail notification is disabled"
@@ -21,11 +21,13 @@ setup_cron() {
   export INTERVAL_MINUTES
 
   CRONTAB_FILE="/tmp/crontab"
+  LOG_DIR="/tmp/logs"
+  LOG_FILE="${LOG_DIR}/scheduled_jobs.log"
   doguctl template /crontab.tpl "${CRONTAB_FILE}"
-  mkdir -p /tmp/logs
+  mkdir -p "${LOG_DIR}"
   # empty log file on each restart of the Dogu
-  : >/tmp/logs/scheduled_jobs.log
-  tail -f /tmp/logs/scheduled_jobs.log &
+  truncate -s 0 "${LOG_FILE}"
+  tail -f "${LOG_FILE}" &
 
   # supercronic is part of the image and is the only supported scheduler here.
   if ! supercronic -test "${CRONTAB_FILE}" >/dev/null 2>&1; then
@@ -33,7 +35,7 @@ setup_cron() {
     return 1
   fi
 
-  supercronic -quiet -no-reap "${CRONTAB_FILE}" >>/tmp/logs/scheduled_jobs.log 2>&1 &
+  supercronic -quiet -no-reap "${CRONTAB_FILE}" >>"${LOG_FILE}" 2>&1 &
 }
 
 parse_cron_interval() {

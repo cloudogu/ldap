@@ -11,8 +11,8 @@ if ! chown -R 100:101 /persistence/db /persistence/config /persistence/local-con
   chmod -R u+rwX,g+rwX,o-rwx /persistence/db /persistence/config /persistence/local-config || true
 fi
 
-# Copy immutable OpenLDAP files into the shared volume mounted at /openldap-etc (init)
-# and later at /etc/openldap (main container).
+# Copy immutable OpenLDAP base files (e.g. ldap.conf + schema defaults from the image)
+# into the shared volume mounted at /openldap-etc (init) and later at /etc/openldap (main container).
 cp -a /etc/openldap/. /openldap-etc/
 chmod -R 0777 /openldap-etc
 
