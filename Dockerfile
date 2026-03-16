@@ -24,13 +24,14 @@ RUN set -eux -o pipefail \
                      su-exec \
     && rm -rf /var/cache/apk/*
 
+# Set UTC as default timezone to ensure consistent behavior across environments.
 ENV TZ=UTC
 EXPOSE 389
 
 COPY --from=ldap-resources / /
 COPY --from=dogu-base /usr/local/bin/doguctl /usr/local/bin/doguctl
 RUN set -eux -o pipefail \
-    && chmod 755 /startup.sh /usr/local/bin/doguctl /component/init-persistence-layout.sh /component/reconcile-service-accounts.sh \
+    && chmod 0755 /startup.sh /usr/local/bin/doguctl /component/init-persistence-layout.sh /component/reconcile-service-accounts.sh \
     && chown -R 100:101 /srv/openldap/ldif.d \
     && chmod -R ug+rwX /srv/openldap/ldif.d
 
@@ -41,7 +42,7 @@ LABEL NAME="official/ldap" \
       maintainer="hello@cloudogu.com"
 
 RUN set -eux -o pipefail \
-    && chmod 755 /srv/openldap/create-sa.sh
+    && chmod 0755 /srv/openldap/create-sa.sh
 
 HEALTHCHECK CMD doguctl healthy ldap || exit 1
 CMD ["/startup.sh"]

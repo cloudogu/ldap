@@ -26,14 +26,14 @@ def componentRegistryNamespace = "k8s"
 def componentChartTargetDir = "target/k8s/helm"
 def componentBuildImageRepository = "registry.cloudogu.com/official/ldap"
 def componentReleaseName = "lop-idp-ldap"
-def goVersion = "1.26.0"
+def buildToolsVersion = "1.26.0"
 
 pipe.setBuildProperties()
 pipe.addDefaultStages()
 
 def runMakeInGoContainer = { target ->
     new com.cloudogu.ces.cesbuildlib.Docker(this)
-        .image("golang:${goVersion}")
+        .image("golang:${buildToolsVersion}")
         .mountJenkinsUser()
         .inside("--volume ${WORKSPACE}:/workdir -w /workdir") {
             sh "make ${target}"
@@ -105,7 +105,7 @@ def componentStages = { group ->
             k3d.kubectl("wait --for=condition=ready pod -l app.kubernetes.io/instance=${componentReleaseName} --timeout=300s")
         } catch (Exception e) {
             k3d.collectAndArchiveLogs()
-            throw e as java.lang.Throwable
+            throw e
         } finally {
             k3d.deleteK3d()
         }
@@ -121,9 +121,12 @@ def componentStages = { group ->
             }
 
             withCredentials([usernamePassword(credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
-                sh ".bin/helm registry login ${componentRegistry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
-                sh ".bin/helm push ${componentChartFile} oci://${componentRegistry}/${componentRegistryNamespace}/"
-                sh ".bin/helm registry logout ${componentRegistry}"
+                try {
+                    sh ".bin/helm registry login ${componentRegistry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
+                    sh ".bin/helm push ${componentChartFile} oci://${componentRegistry}/${componentRegistryNamespace}/"
+                } finally {
+                    sh ".bin/helm registry logout ${componentRegistry}"
+                }
             }
         }
     }
