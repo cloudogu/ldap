@@ -3,6 +3,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+CURRENT_USER_ID=$(id -u)
+
 echo "                                     ./////,                    "
 echo "                                 ./////==//////*                "
 echo "                                ////.  ___   ////.              "
@@ -82,7 +84,7 @@ function startInitDBDaemon {
     echo "Creating ldap socket dir"
     mkdir -p ${OPENLDAP_SOCKET_DIR}
   fi
-  if [[ $(id -u) -eq 0 ]]; then
+  if [[ $CURRENT_USER_ID -eq 0 ]]; then
     chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
   fi
 
@@ -91,6 +93,7 @@ function startInitDBDaemon {
 }
 
 function stopInitDBDaemon {
+  echo >&2 "$0 ($slapd_exe): stopping initdb daemon"
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
@@ -111,7 +114,7 @@ function stopInitDBDaemon {
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
-if [[ $(id -u) -eq 0 ]]; then
+if [[ $CURRENT_USER_ID -eq 0 ]]; then
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 fi
 
@@ -198,8 +201,8 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
-  if [[ $(id -u) -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
-    echo "WARN: chown on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing ownership." >&2
+  if [[ $CURRENT_USER_ID -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
+    echo "WARN: chown for ${OPENLDAP_CONFIG_DIR} failed (likely blocked by security policy or filesystem). Continuing as slapd might still start." >&2
   fi
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
@@ -258,8 +261,8 @@ setup_cron
 doguctl state ready
 
 # Make sure permissions are correct
-if [[ $(id -u) -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
-  echo "WARN: chmod on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing permissions." >&2
+if [[ $CURRENT_USER_ID -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
+  echo "WARN: Failed to set permissions 700 on ${OPENLDAP_CONFIG_DIR} (likely blocked by storage provider or security policy). Continuing anyway." >&2
 fi
 
 echo "Starting ldap..."
