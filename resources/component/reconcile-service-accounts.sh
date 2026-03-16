@@ -133,11 +133,19 @@ reconcile_account() {
   upsert_account "${account_id}" "${account_ou}" "${username}" "${password}"
 }
 
-LDAP_DOMAIN="$(doguctl config --global domain)"
-OPENLDAP_SUFFIX="$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")"
-LDAP_SA_SECRET_BASE_DIR="${LDAP_SERVICE_ACCOUNT_SECRETS_DIR:-/etc/ces/service-accounts}"
-LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+# --- Main logic ---
+reconcile_all_accounts() {
+  LDAP_DOMAIN="$(doguctl config --global domain)"
+  OPENLDAP_SUFFIX="$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")"
+  LDAP_SA_SECRET_BASE_DIR="${LDAP_SERVICE_ACCOUNT_SECRETS_DIR:-/etc/ces/service-accounts}"
+  LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
 
-reconcile_account "cas" "rw" "${LDAP_SA_CAS_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/cas"
-reconcile_account "usermgt" "rw" "${LDAP_SA_USERMGT_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/usermgt"
-reconcile_account "ldap-mapper" "ro" "${LDAP_SA_LDAP_MAPPER_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/ldapMapper"
+  reconcile_account "cas" "rw" "${LDAP_SA_CAS_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/cas"
+  reconcile_account "usermgt" "rw" "${LDAP_SA_USERMGT_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/usermgt"
+  reconcile_account "ldap-mapper" "ro" "${LDAP_SA_LDAP_MAPPER_ENABLED:-false}" "${LDAP_SA_SECRET_BASE_DIR}/ldapMapper"
+}
+
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  reconcile_all_accounts
+fi

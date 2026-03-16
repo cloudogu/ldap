@@ -14,6 +14,8 @@ setup() {
   mkdir -p "${BATS_TMPDIR}/logs"
   touch "${BATS_TMPDIR}/crontab"
 
+  # Set _USER to avoid id -un calls in bats-mock when the current UID is unknown (e.g. in CI)
+  export _USER=ldap
   export STARTUP_DIR=/workspace/resources
   export WORKDIR=/workspace
 
