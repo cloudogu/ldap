@@ -24,6 +24,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{- define "ldap.kebab" -}}
+{{- /* Split each lower/digit + upper boundary (`([a-z0-9])([A-Z])`) and insert `-` between `${1}` and `${2}`. */ -}}
+{{- /* The replacement is applied globally, so `fooBarLongWord` becomes `foo-Bar-Long-Word` and then `foo-bar-long-word`. */ -}}
 {{- regexReplaceAll "([a-z0-9])([A-Z])" . "${1}-${2}" | lower -}}
 {{- end -}}
 
