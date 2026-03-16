@@ -22,6 +22,8 @@ echo "START_OF_THE_PERIOD=${SCRIPT_START_DATE}" >${START_OF_THE_PERIOD_CONF_FILE
 
 log_debug "Start the detection of changed user passwords since ${START_OF_THE_PERIOD}. Script starting time is ${SCRIPT_START_DATE}"
 
+FQDN="$(doguctl config --global fqdn)"
+
 # Configuration of the LDAP and of LDAP search
 LDAP_DOMAIN="$(doguctl config --global domain)"
 OPENLDAP_SUFFIX=$(doguctl config openldap_suffix --default "dc=cloudogu,dc=com")
@@ -41,7 +43,7 @@ LDAP_MAIL_ATTR=mail
 
 # Configuration of mail
 MAIL_BIN="mail"
-DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@cloudogu.com"
+DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@${FQDN}"
 
 DEFAULT_MAIL_SUBJECT="Your password has been changed"
 MAIL_SUBJECT="$(doguctl config --default "${DEFAULT_MAIL_SUBJECT}" "password_change/mail_subject")"
