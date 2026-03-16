@@ -82,7 +82,7 @@ function startInitDBDaemon {
     echo "Creating ldap socket dir"
     mkdir -p ${OPENLDAP_SOCKET_DIR}
   fi
-  if [[ "$(id -u)" -eq 0 ]]; then
+  if [[ $(id -u) -eq 0 ]]; then
     chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
   fi
 
@@ -111,7 +111,7 @@ function stopInitDBDaemon {
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
-if [[ "$(id -u)" -eq 0 ]]; then
+if [[ $(id -u) -eq 0 ]]; then
   chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
 fi
 
@@ -198,7 +198,7 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
-  if [[ "$(id -u)" -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
+  if [[ $(id -u) -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
     echo "WARN: chown on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing ownership." >&2
   fi
 
@@ -258,7 +258,7 @@ setup_cron
 doguctl state ready
 
 # Make sure permissions are correct
-if [[ "$(id -u)" -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
+if [[ $(id -u) -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
   echo "WARN: chmod on ${OPENLDAP_CONFIG_DIR} is not permitted; continue with existing permissions." >&2
 fi
 

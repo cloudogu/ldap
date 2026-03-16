@@ -66,7 +66,7 @@ fi
 
 send_password_change_mail() {
   local recipient="$1"
-  if [[ "$(id -u)" -eq 0 ]]; then
+  if [[ $(id -u) -eq 0 ]]; then
     su-exec ldap "${MAIL_BIN}" -r "${MAIL_FROM}" -s "${MAIL_SUBJECT}" "${recipient}"
   else
     "${MAIL_BIN}" -r "${MAIL_FROM}" -s "${MAIL_SUBJECT}" "${recipient}"
