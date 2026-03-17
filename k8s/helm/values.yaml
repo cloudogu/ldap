@@ -9,6 +9,22 @@ image:
 imagePullPolicy: IfNotPresent
 service:
   port: 389
+networkPolicies:
+  enabled: true
+  consumers:
+    cas:
+      enabled: true
+      matchLabels:
+        dogu.name: cas
+    usermgt:
+      enabled: true
+      matchLabels:
+        dogu.name: usermgt
+    ldapMapper:
+      enabled: true
+      matchLabels:
+        app.kubernetes.io/name: lop-idp-ldap-mapper
+        app.kubernetes.io/instance: lop-idp-ldap-mapper
 config:
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
