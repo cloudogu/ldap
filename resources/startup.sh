@@ -3,8 +3,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-CURRENT_USER_ID=$(id -u)
-
 echo "                                     ./////,                    "
 echo "                                 ./////==//////*                "
 echo "                                ////.  ___   ////.              "
@@ -38,6 +36,8 @@ source set-mdb-size-limit.sh
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
+
+CURRENT_USER_ID=$(id -u)
 
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
