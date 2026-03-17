@@ -69,6 +69,7 @@ teardown() {
     
     # Verify that ldapadd was called to add the new user
     assert_equal "$(mock_get_call_num "${ldapadd}")" "1"
+    assert_equal "$(mock_get_call_num "${ldapmodify}")" "1"
 
     rm -rf "${temp_dir}"
 }
@@ -109,8 +110,8 @@ teardown() {
     assert_success
     assert_line --partial "[SERVICE-ACCOUNT] updating '${existing_dn}'"
     
-    # Verify that ldapmodify was called
-    assert_equal "$(mock_get_call_num "${ldapmodify}")" "1"
+    # One modify for password/description, one modify to clear pwdReset.
+    assert_equal "$(mock_get_call_num "${ldapmodify}")" "2"
 
     rm -rf "${temp_dir}"
 }
@@ -233,6 +234,7 @@ teardown() {
     
     assert_equal "$(mock_get_call_num "${ldapdelete}")" "1"
     assert_equal "$(mock_get_call_num "${ldapadd}")" "1"
+    assert_equal "$(mock_get_call_num "${ldapmodify}")" "1"
 
     rm -rf "${temp_dir}"
 }
@@ -270,6 +272,7 @@ teardown() {
     assert_success
     # Should use 'Bind Users' instead of 'Special Users'
     assert_line --partial "[SERVICE-ACCOUNT] creating 'cn=mapper-sa,ou=Bind Users,o=cloudogu.com,dc=cloudogu,dc=com'"
+    assert_equal "$(mock_get_call_num "${ldapmodify}")" "1"
     
     rm -rf "${temp_dir}"
 }

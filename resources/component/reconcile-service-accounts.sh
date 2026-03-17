@@ -30,6 +30,19 @@ entry_exists() {
   ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// -b "${dn}" -s base dn >/dev/null 2>&1
 }
 
+# Service accounts are technical users and must be usable immediately after password
+# create/update. With the active password policy, pwdReset=TRUE restricts the account
+# to bind/unbind/password-change operations and blocks normal LDAP searches.
+clear_pwd_reset() {
+  local dn="$1"
+  ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
+dn: ${dn}
+changetype: modify
+replace: pwdReset
+pwdReset: FALSE
+EOF
+}
+
 delete_dn() {
   local dn="$1"
   if entry_exists "${dn}"; then
@@ -80,6 +93,7 @@ userPassword: ${enc_password}
 replace: description
 description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}
 EOF
+    clear_pwd_reset "${desired_dn}"
   else
     echo "[SERVICE-ACCOUNT] creating '${desired_dn}'"
     ldapadd -Q -Y EXTERNAL -H ldapi:/// <<EOF
@@ -90,6 +104,7 @@ objectClass: simpleSecurityObject
 description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}
 userPassword: ${enc_password}
 EOF
+    clear_pwd_reset "${desired_dn}"
   fi
 }
 
