@@ -3,9 +3,10 @@ set -eu
 
 # shellcheck disable=SC2034
 LOG_PREFIX="MIGRATION-STEP1"
+COMMON_SH_PATH="${COMMON_SH_PATH:-/scripts/common.sh}"
 # shellcheck source=/scripts/common.sh
 # shellcheck disable=SC1091
-. /scripts/common.sh
+. "${COMMON_SH_PATH}"
 
 require_env "NAMESPACE"
 require_env "COMPONENT_CONFIGMAP_NAME"
