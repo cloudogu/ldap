@@ -1,4 +1,4 @@
-ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.23.3-4
+ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.23.3-5
 ARG ALPINE_BASE_IMAGE=alpine:3.23
 ARG OPENLDAP_PKG_VER=2.6.10-r0
 
@@ -38,7 +38,7 @@ RUN set -eux -o pipefail \
 FROM ldap-common AS dogu
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.10-1" \
+      VERSION="2.6.10-2" \
       maintainer="hello@cloudogu.com"
 
 RUN set -eux -o pipefail \
