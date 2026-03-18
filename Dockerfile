@@ -38,11 +38,13 @@ RUN set -eux -o pipefail \
 FROM ldap-common AS dogu
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.8-7" \
+      VERSION="2.6.10-1" \
       maintainer="hello@cloudogu.com"
 
 RUN set -eux -o pipefail \
     && chmod 0755 /srv/openldap/create-sa.sh
 
 HEALTHCHECK CMD doguctl healthy ldap || exit 1
+
+# FIRE IT UP
 CMD ["/startup.sh"]

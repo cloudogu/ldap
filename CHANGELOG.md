@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#69] Replace `crond` with `supercronic` for password-change notification scheduling to support non-root runtime.
 - [#69] Send password-change notification mails without `mailuser`/`revaliases`; sender is configured directly via config values.
 
+## [v2.6.10-1] - 2026-03-03
+### Changed
+- [#59] Upgrade OpenLDAP to v2.6.10-r0
+
 ## [v2.6.8-7] - 2026-02-18
 ### Fixed
 - [#65] Upgrade base-image to 3.23.3-4
@@ -31,11 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - [#61] CVE fixed: [cve-2025-15467](https://avd.aquasec.com/nvd/2025/cve-2025-15467/)
 - [#61] update base image to v3.23.2-2
-
-## [v2.6.10-1] - 2025-12-05
-### Changed
-- [#59] Upgrade OpenLDAP to v2.6.10-r0
-- [#59] Upgrade base-image to v3.23.0-1
 
 ## [v2.6.8-4] - 2025-04-23
 ### Changed
