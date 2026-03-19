@@ -90,9 +90,11 @@ olcSizeLimit: 1000
 # FRONTEND ACCESS
 # Allow unlimited access to local connection from the local root user
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+# Allow unlimited access to local connection from the ldap runtime user in component mode
+olcAccess: {1}to * by dn.exact=gidNumber=101+uidNumber=100,cn=peercred,cn=external,cn=auth manage by * break
 # Allow unauthenticated read access for schema and base DN autodiscovery
-olcAccess: {1}to dn.exact= by * read
-olcAccess: {2}to dn.base=cn=Subschema by * read
+olcAccess: {2}to dn.exact= by * read
+olcAccess: {3}to dn.base=cn=Subschema by * read
 
 #
 # CONFIG DATABASE
@@ -103,6 +105,8 @@ olcDatabase: config
 #
 # Allow unlimited access to local connection from the local root user
 olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+# Allow unlimited access to local connection from the ldap runtime user in component mode
+olcAccess: to * by dn.exact=gidNumber=101+uidNumber=100,cn=peercred,cn=external,cn=auth manage by * break
 
 #
 # BACKENDS
@@ -132,6 +136,7 @@ olcDbIndex: sn pres,eq,approx,sub
 # BACKEND ACCESS
 ## TODO - correct ADMIN USER!
 olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+olcAccess: to * by dn.exact=gidNumber=101+uidNumber=100,cn=peercred,cn=external,cn=auth manage by * break
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth

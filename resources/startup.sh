@@ -37,6 +37,8 @@ source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
 
+CURRENT_USER_ID=$(id -u)
+
 # variables which are used while rendering templates are exported
 export OPENLDAP_ETC_DIR="/etc/openldap"
 OPENLDAP_RUN_DIR="/var/run/openldap"
@@ -82,13 +84,16 @@ function startInitDBDaemon {
     echo "Creating ldap socket dir"
     mkdir -p ${OPENLDAP_SOCKET_DIR}
   fi
-  chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+  if [[ $CURRENT_USER_ID -eq 0 ]]; then
+    chown -R ldap:ldap ${OPENLDAP_SOCKET_DIR}
+  fi
 
   /usr/sbin/slapd -h ldapi:/// -u ldap -g ldap
   waitForLdapHealth
 }
 
 function stopInitDBDaemon {
+  echo >&2 "$0 ($slapd_exe): stopping initdb daemon"
   if [[ ! -s ${OPENLDAP_RUN_PIDFILE} ]]; then
     echo >&2 "$0 ($slapd_exe): ${OPENLDAP_RUN_PIDFILE} is missing, did the daemon start?"
     exit 1
@@ -109,7 +114,9 @@ function stopInitDBDaemon {
 if [[ ! -d ${OPENLDAP_RUN_DIR} ]]; then
   mkdir -p ${OPENLDAP_RUN_DIR}
 fi
-chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+if [[ $CURRENT_USER_ID -eq 0 ]]; then
+  chown -R ldap:ldap ${OPENLDAP_RUN_DIR}
+fi
 
 # Generate ldap.conf and slapd-config.ldif.
 # This has to be done at every dogu start. Otherwise service account operations will fail
@@ -181,8 +188,12 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
   export ADMIN_MAIL
 
   echo "[DOGU] Get admin password ..."
-  # TODO remove from etcd ???
-  ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
+  if [[ -n "${LDAP_INITIAL_ADMIN_PASSWORD:-}" ]]; then
+    ADMIN_PASSWORD="${LDAP_INITIAL_ADMIN_PASSWORD}"
+  else
+    # Fallback for legacy dogu config when installed as dogu.
+    ADMIN_PASSWORD=$(doguctl config -e -d admin admin_password)
+  fi
   ADMIN_PASSWORD_ENC="$(slappasswd -s "${ADMIN_PASSWORD}")"
   export ADMIN_PASSWORD_ENC
 
@@ -190,7 +201,9 @@ if [[ ! -d ${OPENLDAP_CONFIG_DIR}/cn=config ]]; then
 
   slapadd -n0 -F ${OPENLDAP_CONFIG_DIR} -l ${OPENLDAP_ETC_DIR}/slapd-config.ldif >${OPENLDAP_ETC_DIR}/slapd-config.ldif.log
   # has to be called after slapadd because slapadd generates the files in ${OPENLDAP_CONFIG_DIR}
-  chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}
+  if [[ $CURRENT_USER_ID -eq 0 ]] && ! chown -R ldap:ldap ${OPENLDAP_CONFIG_DIR}; then
+    echo "WARN: chown for ${OPENLDAP_CONFIG_DIR} failed (likely blocked by security policy or filesystem). Continuing as slapd might still start." >&2
+  fi
 
   mkdir -p ${OPENLDAP_BACKEND_DIR}/run
 
@@ -236,22 +249,21 @@ installSSSVLVIfNecessary
 increaseUserSearchLimit
 setMdbSizeLimit
 
-stopInitDBDaemon
+echo "[DOGU] Reconcile LDAP service accounts ..."
+/component/reconcile-service-accounts.sh
 
-echo "[DOGU] Update password change notification user ..."
-update_pwd_change_notification_user
+stopInitDBDaemon
 
 echo "[DOGU] Setup cron job ..."
 setup_cron
-
-echo "[DOGU] Update password change sender address mapping ..."
-update_email_sender_alias_mapping
 
 # set stage for health check
 doguctl state ready
 
 # Make sure permissions are correct
-chmod -R 700 "${OPENLDAP_CONFIG_DIR}"
+if [[ $CURRENT_USER_ID -eq 0 ]] && ! chmod -R 700 "${OPENLDAP_CONFIG_DIR}"; then
+  echo "WARN: Failed to set permissions 700 on ${OPENLDAP_CONFIG_DIR} (likely blocked by storage provider or security policy). Continuing anyway." >&2
+fi
 
 echo "Starting ldap..."
 /usr/sbin/slapd -h "ldapi:/// ldap:///" -u ldap -g ldap -d "${LOGLEVEL}"

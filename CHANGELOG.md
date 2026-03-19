@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- [#69] Release LDAP additionally as a Helm-based component for usage in LOP-IdP.
+    - Add component chart resources (`Chart.yaml`, `values.yaml`, StatefulSet, Service, ConfigMap, component patch template).
+    - Add configurable service-account Secret support for `cas` (RW), `usermgt` (RW), and `ldapMapper` (RO), including startup reconciliation.
+
+### Changed
+- [#69] Consolidate build and development workflow into one central `Makefile` with dedicated dogu and component targets.
+- [#69] Extend Jenkins pipeline with component build, test, k3d smoke test, and release publishing stages (component image and chart).
+- [#69] Replace `crond` with `supercronic` for password-change notification scheduling to support non-root runtime.
+- [#69] Send password-change notification mails without `mailuser`/`revaliases`; sender is configured directly via config values.
 
 ## [v2.6.10-2] - 2026-03-13
 ### Changed

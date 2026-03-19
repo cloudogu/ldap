@@ -8,7 +8,7 @@ source /scheduled_jobs.sh
 
 log_debug "##########"
 # Read start of the period from config file
-START_OF_THE_PERIOD_CONF_FILE=/send-mail-after-changed-password_starting-period
+START_OF_THE_PERIOD_CONF_FILE=/tmp/send-mail-after-changed-password_starting-period
 if [ ! -f "$START_OF_THE_PERIOD_CONF_FILE" ]; then
   log_debug "${START_OF_THE_PERIOD_CONF_FILE} does not exist. Now create these"
   echo "START_OF_THE_PERIOD=$(date +%Y%m%d%H%M%S)" >${START_OF_THE_PERIOD_CONF_FILE}
@@ -21,6 +21,8 @@ SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
 echo "START_OF_THE_PERIOD=${SCRIPT_START_DATE}" >${START_OF_THE_PERIOD_CONF_FILE}
 
 log_debug "Start the detection of changed user passwords since ${START_OF_THE_PERIOD}. Script starting time is ${SCRIPT_START_DATE}"
+
+FQDN="$(doguctl config --global fqdn)"
 
 # Configuration of the LDAP and of LDAP search
 LDAP_DOMAIN="$(doguctl config --global domain)"
@@ -41,6 +43,7 @@ LDAP_MAIL_ATTR=mail
 
 # Configuration of mail
 MAIL_BIN="mail"
+DEFAULT_MAIL_SENDER_ADDRESS="ldap.dogu@${FQDN}"
 
 DEFAULT_MAIL_SUBJECT="Your password has been changed"
 MAIL_SUBJECT="$(doguctl config --default "${DEFAULT_MAIL_SUBJECT}" "password_change/mail_subject")"
@@ -49,6 +52,22 @@ DEFAULT_MAIL_BODY="Hello %name,\n\n\
 your password of your user %uid in the CES has been changed.\n\n\
 Regards."
 MAIL_BODY="$(doguctl config --default "${DEFAULT_MAIL_BODY}" "password_change/mail_text")"
+
+MAIL_SENDER_ADDRESS="$(doguctl config --default "${DEFAULT_MAIL_SENDER_ADDRESS}" "password_change/mail_sender_address")"
+if [[ ! "${MAIL_SENDER_ADDRESS}" == "${DEFAULT_MAIL_SENDER_ADDRESS}" && ! "${MAIL_SENDER_ADDRESS}" =~ ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+$ ]]; then
+  log_error "The configured sender e-mail address seems to be invalid. Falling back to default address: ${DEFAULT_MAIL_SENDER_ADDRESS}"
+  MAIL_SENDER_ADDRESS="${DEFAULT_MAIL_SENDER_ADDRESS}"
+fi
+MAIL_SENDER_NAME="$(doguctl config --default "Change password mailer" "password_change/mail_sender_name")"
+MAIL_FROM="${MAIL_SENDER_ADDRESS}"
+if [[ -n "${MAIL_SENDER_NAME}" ]]; then
+  MAIL_FROM="${MAIL_SENDER_NAME} <${MAIL_SENDER_ADDRESS}>"
+fi
+
+send_password_change_mail() {
+  local recipient="$1"
+  "${MAIL_BIN}" -r "${MAIL_FROM}" -s "${MAIL_SUBJECT}" "${recipient}"
+}
 
 # Configuration of temporary files
 tmp_dir="/tmp/$$.checkldap.tmp"
@@ -98,7 +117,7 @@ while read -r dnStr; do
   if [[ ${pwdChangedTime} -ge ${START_OF_THE_PERIOD} && ${pwdChangedTime} -lt ${SCRIPT_START_DATE} ]]; then
     logmsg="${MAIL_BODY}"
     logmsg="$(echo -e "${logmsg}" | sed "s/%name/${name}/; s/%uid/${uid}/;")"
-    echo "${logmsg}" | exec su - mailuser -c "${MAIL_BIN} -s \"${MAIL_SUBJECT}\" \"${mail}\"" >&2
+    echo "${logmsg}" | send_password_change_mail "${mail}" >&2
     echo "The password of the user '$uid' has been changed on ${pwdChangedTime}. E-mail sent to the assigned address."
   fi
 done <${result_file}

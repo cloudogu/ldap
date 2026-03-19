@@ -1,0 +1,84 @@
+global:
+  imagePullSecrets:
+    - name: "ces-container-registries"
+replicas: 1
+image:
+  registry: registry.cloudogu.com
+  repository: official/ldap
+  tag: 2.6.8-7
+imagePullPolicy: IfNotPresent
+service:
+  port: 389
+config:
+  # Component configuration keys aligned with dogu.json (excluding container_config/*).
+  password_change:
+    notification_enabled: "true"
+    check_interval_minutes: "1"
+    mail_sender_address: ""
+    mail_sender_name: ""
+    mail_subject: ""
+    mail_text: ""
+  logging:
+    root: "INFO"
+  user_search_size_limit: "4000"
+  max_db_size: "104857600"
+  admin_username: "admin"
+  admin_member: "false"
+  admin_givenname: "admin"
+  admin_surname: "admin"
+  admin_displayname: "admin"
+  admin_mail: ""
+  openldap_suffix: "dc=cloudogu,dc=com"
+globalConfig:
+  configMapName: "global-config"
+  key: "config.yaml"
+secrets:
+  # Initial password for the LDAP admin user under ou=People.
+  # This value is only used during first initialization of the LDAP data.
+  initialAdminPasswordSecretRef:
+    create: true
+    name: ""
+    passwordKey: password
+  serviceAccounts:
+    # For strict GitOps/ArgoCD setups without Helm lookup support, set create=false and
+    # provide externally managed Secrets with the configured name and keys.
+    cas:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-cas-sa"
+        usernameKey: username
+        passwordKey: password
+    usermgt:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-usermgt-sa"
+        usernameKey: username
+        passwordKey: password
+    ldapMapper:
+      enabled: true
+      secret:
+        create: true
+        name: "lop-idp-ldap-ldap-mapper-sa"
+        usernameKey: username
+        passwordKey: password
+persistence:
+  size: 1Gi
+  storageClassName: ""
+podSecurityContext:
+  fsGroup: 101
+securityContext:
+  runAsUser: 100
+  runAsGroup: 101
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    memory: 256Mi

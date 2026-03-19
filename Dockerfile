@@ -1,34 +1,49 @@
-FROM registry.cloudogu.com/official/base:3.23.3-5
+ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.23.3-5
+ARG ALPINE_BASE_IMAGE=alpine:3.23
+ARG OPENLDAP_PKG_VER=2.6.10-r0
 
-LABEL NAME="official/ldap" \
-      VERSION="2.6.10-2" \
-      maintainer="hello@cloudogu.com"
-
-ENV OPENLDAP_PKG_VER="2.6.10-r0"
-
+FROM scratch AS ldap-resources
 COPY ./resources /
+COPY ./dogu.json /dogu.json
 
-# Install application and dependencies
+FROM ${DOGU_BASE_IMAGE} AS dogu-base
+
+FROM ${ALPINE_BASE_IMAGE} AS ldap-common
+ARG OPENLDAP_PKG_VER
+
 RUN set -eux -o pipefail \
     && apk update \
     && apk upgrade \
     && apk add --update openldap=${OPENLDAP_PKG_VER} openldap-clients openldap-back-mdb \
                      openldap-overlay-memberof openldap-overlay-refint openldap-overlay-unique \
-                     openldap-overlay-ppolicy  \
+                     openldap-overlay-ppolicy \
                      openldap-overlay-sssvlv \
-    && apk add mailx ssmtp su-exec \
-    && rm -rf /var/cache/apk/* \
-    # ensure permissions of scripts
-    && chmod 755 startup.sh \
-    && chmod 755 srv/openldap/create-sa.sh
+                     ca-certificates jq openssl tar zip unzip mailx ssmtp \
+                     supercronic \
+                     bash \
+                     su-exec \
+    && rm -rf /var/cache/apk/*
 
-# Set time zone to UTC so that time zone is the same as LDAP.
+# Set UTC as default timezone to ensure consistent behavior across environments.
 ENV TZ=UTC
-
-# LDAP PORT
 EXPOSE 389
 
-# healtcheck
+COPY --from=ldap-resources / /
+COPY --from=dogu-base /usr/local/bin/doguctl /usr/local/bin/doguctl
+RUN set -eux -o pipefail \
+    && chmod 0755 /startup.sh /usr/local/bin/doguctl /component/init-persistence-layout.sh /component/reconcile-service-accounts.sh \
+    && chown -R 100:101 /srv/openldap/ldif.d \
+    && chmod -R ug+rwX /srv/openldap/ldif.d
+
+FROM ldap-common AS dogu
+
+LABEL NAME="official/ldap" \
+      VERSION="2.6.10-2" \
+      maintainer="hello@cloudogu.com"
+
+RUN set -eux -o pipefail \
+    && chmod 0755 /srv/openldap/create-sa.sh
+
 HEALTHCHECK CMD doguctl healthy ldap || exit 1
 
 # FIRE IT UP

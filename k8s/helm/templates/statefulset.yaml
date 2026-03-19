@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ldap.fullname" . }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "ldap.fullname" . }}
+  replicas: {{ .Values.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "ldap.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ldap.labels" . | nindent 8 }}
+      annotations:
+        checksum/component-config: {{ include (print $.Template.BasePath "/component-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-persistence-layout
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command:
+            - /component/init-persistence-layout.sh
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - CHOWN
+                - FOWNER
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /persistence
+            - name: openldap-etc
+              mountPath: /openldap-etc
+            - name: ces-dogu-json
+              mountPath: /ces-dogu-json
+      containers:
+        - name: ldap
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: ECOSYSTEM_MULTINODE
+              value: "true"
+            - name: LDAP_SERVICE_ACCOUNT_SECRETS_DIR
+              value: /etc/ces/service-accounts
+            - name: LDAP_SA_CAS_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.cas.enabled | toString | quote }}
+            - name: LDAP_SA_USERMGT_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.usermgt.enabled | toString | quote }}
+            - name: LDAP_SA_LDAP_MAPPER_ENABLED
+              value: {{ .Values.secrets.serviceAccounts.ldapMapper.enabled | toString | quote }}
+            - name: LDAP_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ldap.initialAdminPasswordSecretName" . | quote }}
+                  key: {{ required "values.secrets.initialAdminPasswordSecretRef.passwordKey is required" .Values.secrets.initialAdminPasswordSecretRef.passwordKey | quote }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: ldap
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: ldap
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: ldap
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/openldap
+              subPath: db
+            - name: openldap-etc
+              mountPath: /etc/openldap
+            - name: data
+              mountPath: /etc/openldap/slapd.d
+              subPath: config
+            - name: data
+              mountPath: /var/ces/config
+              subPath: local-config
+            - name: ces-config
+              mountPath: /etc/ces/config
+              readOnly: true
+            - name: ces-dogu-json
+              mountPath: /etc/ces/dogu_json
+              readOnly: true
+            - name: ces-state
+              mountPath: /var/ces/state
+            {{- if .Values.secrets.serviceAccounts.cas.enabled }}
+            - name: sa-secret-cas
+              mountPath: /etc/ces/service-accounts/cas
+              readOnly: true
+            {{- end }}
+            {{- if .Values.secrets.serviceAccounts.usermgt.enabled }}
+            - name: sa-secret-usermgt
+              mountPath: /etc/ces/service-accounts/usermgt
+              readOnly: true
+            {{- end }}
+            {{- if .Values.secrets.serviceAccounts.ldapMapper.enabled }}
+            - name: sa-secret-ldap-mapper
+              mountPath: /etc/ces/service-accounts/ldapMapper
+              readOnly: true
+            {{- end }}
+      volumes:
+        # Recreated on each Pod start; init container repopulates it from image /etc/openldap.
+        - name: openldap-etc
+          emptyDir: {}
+        - name: ces-config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Values.globalConfig.configMapName | quote }}
+                  items:
+                    - key: {{ .Values.globalConfig.key | quote }}
+                      path: global/config.yaml
+              - configMap:
+                  name: {{ include "ldap.fullname" . }}-config
+                  items:
+                    - key: config.yaml
+                      path: normal/config.yaml
+                    - key: sensitive-config.yaml
+                      path: sensitive/config.yaml
+        - name: ces-dogu-json
+          emptyDir: { }
+        - name: ces-state
+          emptyDir: { }
+        {{- if .Values.secrets.serviceAccounts.cas.enabled }}
+        - name: sa-secret-cas
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "cas" .Values.secrets.serviceAccounts.cas) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.cas.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.cas.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
+        {{- if .Values.secrets.serviceAccounts.usermgt.enabled }}
+        - name: sa-secret-usermgt
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "usermgt" .Values.secrets.serviceAccounts.usermgt) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.usermgt.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.usermgt.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
+        {{- if .Values.secrets.serviceAccounts.ldapMapper.enabled }}
+        - name: sa-secret-ldap-mapper
+          secret:
+            secretName: {{ include "ldap.serviceAccountSecretName" (list . "ldapMapper" .Values.secrets.serviceAccounts.ldapMapper) }}
+            optional: true
+            items:
+              - key: {{ .Values.secrets.serviceAccounts.ldapMapper.secret.usernameKey | default "username" | quote }}
+                path: username
+              - key: {{ .Values.secrets.serviceAccounts.ldapMapper.secret.passwordKey | default "password" | quote }}
+                path: password
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "ldap.labels" . | nindent 10 }}
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.persistence.storageClassName }}
+        storageClassName: {{ .Values.persistence.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

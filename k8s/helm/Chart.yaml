@@ -1,0 +1,6 @@
+apiVersion: v2
+name: lop-idp-ldap
+description: A Helm chart for the LDAP component used by LOP-IdP.
+type: application
+version: 0.0.0-replaceme
+appVersion: "0.0.0-replaceme"
