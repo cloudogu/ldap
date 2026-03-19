@@ -49,23 +49,57 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 {{- end -}}
 
+{{- define "ldap.lookupSecretValue" -}}
+{{- $root := .root -}}
+{{- $secretName := .secretName -}}
+{{- $key := .key -}}
+{{- $secret := lookup "v1" "Secret" $root.Release.Namespace $secretName -}}
+{{- if and $secret $secret.data -}}
+{{- with (index $secret.data $key) -}}
+{{- . | b64dec -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "ldap.globalDomain" -}}
+{{- $root := . -}}
+{{- $globalConfig := lookup "v1" "ConfigMap" $root.Release.Namespace $root.Values.globalConfig.configMapName -}}
+{{- $configYaml := "" -}}
+{{- if and $globalConfig $globalConfig.data -}}
+{{- $configYaml = default "" (index $globalConfig.data $root.Values.globalConfig.key) -}}
+{{- end -}}
+{{- $domain := default $root.Values.globalConfig.domain ((fromYaml $configYaml).domain) -}}
+{{- required "global domain is required to render LDAP service account secrets" $domain -}}
+{{- end -}}
+
+{{- define "ldap.serviceAccountOu" -}}
+{{- if eq . "rw" -}}Special Users{{- else -}}Bind Users{{- end -}}
+{{- end -}}
+
+{{- define "ldap.defaultServiceAccountBindDn" -}}
+{{- $root := .root -}}
+{{- $username := .username -}}
+{{- $accessType := .accessType -}}
+{{- $domain := include "ldap.globalDomain" $root -}}
+{{- $suffix := default "dc=cloudogu,dc=com" $root.Values.config.openldap_suffix -}}
+{{- $ou := include "ldap.serviceAccountOu" $accessType -}}
+{{- printf "cn=%s,ou=%s,o=%s,%s" $username $ou $domain $suffix -}}
+{{- end -}}
+
 {{- define "ldap.renderServiceAccountSecret" -}}
 {{- $root := .root -}}
 {{- $accountKey := .accountKey -}}
 {{- $accountConfig := .accountConfig -}}
 {{- $defaultUsername := .defaultUsername -}}
+{{- $accessType := .accessType -}}
 {{- $secretName := include "ldap.serviceAccountSecretName" (list $root $accountKey $accountConfig) -}}
 {{- $usernameKey := default "username" $accountConfig.secret.usernameKey -}}
 {{- $passwordKey := default "password" $accountConfig.secret.passwordKey -}}
-{{- $existingSecret := lookup "v1" "Secret" $root.Release.Namespace $secretName -}}
-{{- $existingUsername := dict "value" "" -}}
-{{- $existingPassword := dict "value" "" -}}
-{{- if and $existingSecret $existingSecret.data -}}
-{{- with (index $existingSecret.data $usernameKey) }}{{- $_ := set $existingUsername "value" (. | b64dec) -}}{{- end -}}
-{{- with (index $existingSecret.data $passwordKey) }}{{- $_ := set $existingPassword "value" (. | b64dec) -}}{{- end -}}
-{{- end -}}
-{{- $username := default $defaultUsername (index $existingUsername "value") -}}
-{{- $password := default (randAlphaNum 40) (index $existingPassword "value") -}}
+{{- $existingUsername := include "ldap.lookupSecretValue" (dict "root" $root "secretName" $secretName "key" $usernameKey) -}}
+{{- $existingPassword := include "ldap.lookupSecretValue" (dict "root" $root "secretName" $secretName "key" $passwordKey) -}}
+{{- $defaultBindDn := include "ldap.defaultServiceAccountBindDn" (dict "root" $root "username" $defaultUsername "accessType" $accessType) -}}
+{{- $username := default $defaultBindDn $existingUsername -}}
+{{- $password := default (randAlphaNum 40) $existingPassword -}}
 apiVersion: v1
 kind: Secret
 metadata:

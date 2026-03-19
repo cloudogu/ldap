@@ -67,9 +67,16 @@ upsert_account() {
   local account_ou="$2"
   local username="$3"
   local password="$4"
-  local desired_dn="cn=${username},ou=${account_ou},o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
+  local desired_dn="${username}"
+  local cn_value
   local enc_password
   local dn
+
+  cn_value="$(printf '%s' "${desired_dn}" | sed -n 's/^cn=\([^,]*\),.*$/\1/p')"
+  if [[ -z "${cn_value}" ]]; then
+    echo "invalid service account dn '${desired_dn}'" >&2
+    exit 1
+  fi
 
   enc_password="$(slappasswd -s "${password}")"
 
@@ -98,7 +105,7 @@ EOF
     echo "[SERVICE-ACCOUNT] creating '${desired_dn}'"
     ldapadd -Q -Y EXTERNAL -H ldapi:/// <<EOF
 dn: ${desired_dn}
-cn: ${username}
+cn: ${cn_value}
 objectClass: organizationalRole
 objectClass: simpleSecurityObject
 description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}
