@@ -15,11 +15,13 @@ networkPolicies:
     cas:
       enabled: true
       matchLabels:
-        dogu.name: cas
+        app.kubernetes.io/instance: lop-idp-cas
+        app.kubernetes.io/name: lop-idp-cas
     usermgt:
       enabled: true
       matchLabels:
-        dogu.name: usermgt
+        app.kubernetes.io/name: lop-idp-usermgt
+        app.kubernetes.io/instance: lop-idp-usermgt
     ldapMapper:
       enabled: true
       matchLabels:
