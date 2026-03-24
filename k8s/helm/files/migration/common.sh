@@ -21,7 +21,7 @@ log() {
   echo "[${LOG_PREFIX:-MIGRATION}] $*"
 }
 
-k() {
+kns() {
   kubectl -n "${NAMESPACE}" "$@"
 }
 
@@ -37,7 +37,7 @@ require_env() {
 get_configmap_data() {
   configmap_name="$1"
   configmap_key="$2"
-  k get "configmap/${configmap_name}" -o "go-template={{ index .data \"$configmap_key\" }}" 2>/dev/null || true
+  kns get "configmap/${configmap_name}" -o "go-template={{ index .data \"$configmap_key\" }}" 2>/dev/null || true
 }
 
 extract_yaml_scalar() {
@@ -101,12 +101,12 @@ validate_migration_configuration() {
 }
 
 get_migration_phase() {
-  k get "configmap/${COMPONENT_CONFIGMAP_NAME}" -o jsonpath='{.data.migrationPhase}' 2>/dev/null || true
+  kns get "configmap/${COMPONENT_CONFIGMAP_NAME}" -o jsonpath='{.data.migrationPhase}' 2>/dev/null || true
 }
 
 set_migration_phase() {
   phase="$1"
-  k patch "configmap/${COMPONENT_CONFIGMAP_NAME}" --type merge \
+  kns patch "configmap/${COMPONENT_CONFIGMAP_NAME}" --type merge \
     -p "{\"data\":{\"migrationPhase\":\"${phase}\"}}" >/dev/null
 }
 
@@ -114,7 +114,7 @@ wait_for_no_pods_by_selector() {
   selector="$1"
   end_time="$(( $(date +%s) + WAIT_TIMEOUT_SECONDS ))"
   while [ "$(date +%s)" -lt "${end_time}" ]; do
-    active_count="$(k get pods -l "${selector}" -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' \
+    active_count="$(kns get pods -l "${selector}" -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' \
       | grep -Ec 'Running|Pending' || true)"
     if [ "${active_count}" -eq 0 ]; then
       return 0
@@ -126,7 +126,7 @@ wait_for_no_pods_by_selector() {
 
 scale_target() {
   replicas="$1"
-  k scale "statefulset/${TARGET_STATEFULSET_NAME}" --replicas="${replicas}" >/dev/null
+  kns scale "statefulset/${TARGET_STATEFULSET_NAME}" --replicas="${replicas}" >/dev/null
 }
 
 clear_dir_contents() {
