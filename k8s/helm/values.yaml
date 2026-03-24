@@ -105,7 +105,7 @@ migration:
   hook:
     image:
       repository: docker.io/alpine/kubectl
-      tag: "1.35.2"
+      tag: "1.35.3"
       pullPolicy: IfNotPresent
     waitTimeoutSeconds: 300
     backoffLimit: 0

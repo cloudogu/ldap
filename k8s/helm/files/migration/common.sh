@@ -9,6 +9,8 @@ SOURCE_GLOBAL_CONFIGMAP_NAME="global-config"
 SOURCE_GLOBAL_CONFIGMAP_KEY="config.yaml"
 DEFAULT_OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
 WAIT_TIMEOUT_SECONDS="${WAIT_TIMEOUT_SECONDS:-300}"
+RETRY_ATTEMPTS="${RETRY_ATTEMPTS:-3}"
+RETRY_DELAY_SECONDS="${RETRY_DELAY_SECONDS:-2}"
 SOURCE_DB_SUBPATH="db"
 TARGET_DB_SUBPATH="db"
 MIGRATION_PHASE_PENDING="pending"
@@ -42,9 +44,28 @@ get_configmap_data() {
 
 extract_yaml_scalar() {
   yaml_key="$1"
-  sed -n "s/^${yaml_key}:[[:space:]]*//p" \
-    | head -n 1 \
-    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+
+  # plain top-level lines like `domain: example.com` or `openldap_suffix: "dc=example,dc=com"`.
+  while IFS= read -r line; do
+    case "${line}" in
+      "${yaml_key}":*)
+        # Drop everything through the first ":" to keep only the scalar value.
+        value="${line#*:}"
+        # Trim surrounding whitespace after the ":".
+        value="$(printf '%s' "${value}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+
+        # Remove one pair of surrounding quotes when the scalar is wrapped as
+        # "value" or 'value'. Inner quotes remain untouched.
+         case "${value}" in
+           \"*\") value="${value#\"}"; value="${value%\"}" ;;
+           \'*\') value="${value#\'}"; value="${value%\'}" ;;
+         esac
+
+        printf '%s\n' "${value}"
+        return 0
+        ;;
+    esac
+  done
 }
 
 validate_migration_configuration() {
@@ -83,7 +104,7 @@ validate_migration_configuration() {
   source_domain="$(printf '%s\n' "${source_global_config_yaml}" | extract_yaml_scalar "domain")"
   target_domain="$(printf '%s\n' "${target_global_config_yaml}" | extract_yaml_scalar "domain")"
   if [ -z "${source_domain}" ] || [ -z "${target_domain}" ]; then
-    log "Migration config validation failed: unable to resolve 'domain' for source or target."
+    log "Migration config validation failed: unable to resolve 'domain' for source='${source_domain}' or target='${target_domain}'."
     return 1
   fi
 
@@ -104,9 +125,28 @@ get_migration_phase() {
   kns get "configmap/${COMPONENT_CONFIGMAP_NAME}" -o jsonpath='{.data.migrationPhase}' 2>/dev/null || true
 }
 
+retry_command() {
+  attempt=1
+  while [ "${attempt}" -le "${RETRY_ATTEMPTS}" ]; do
+    if "$@"; then
+      return 0
+    fi
+
+    if [ "${attempt}" -lt "${RETRY_ATTEMPTS}" ]; then
+      log "Command failed (attempt ${attempt}/${RETRY_ATTEMPTS}), retrying in ${RETRY_DELAY_SECONDS}s: $*"
+      sleep "${RETRY_DELAY_SECONDS}"
+    fi
+
+    attempt="$(( attempt + 1 ))"
+  done
+
+  log "Command failed after ${RETRY_ATTEMPTS} attempts: $*"
+  return 1
+}
+
 set_migration_phase() {
   phase="$1"
-  kns patch "configmap/${COMPONENT_CONFIGMAP_NAME}" --type merge \
+  retry_command kns patch "configmap/${COMPONENT_CONFIGMAP_NAME}" --type merge \
     -p "{\"data\":{\"migrationPhase\":\"${phase}\"}}" >/dev/null
 }
 
@@ -114,19 +154,26 @@ wait_for_no_pods_by_selector() {
   selector="$1"
   end_time="$(( $(date +%s) + WAIT_TIMEOUT_SECONDS ))"
   while [ "$(date +%s)" -lt "${end_time}" ]; do
+    # jsonpath prints the phase of each matching pod.
+    # {"\n"} adds a line break after every phase so grep can count one pod state per line.
+    # grep exits with 1 when it finds no Running/Pending pods;
+    # `|| true` converts that expected "no matches" case into a zero count instead of aborting the script.
     active_count="$(kns get pods -l "${selector}" -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' \
       | grep -Ec 'Running|Pending' || true)"
     if [ "${active_count}" -eq 0 ]; then
+      log "No active pods remain for selector '${selector}'."
       return 0
     fi
+    log "Waiting for pods with selector '${selector}' to stop. Active pods: ${active_count}."
     sleep 2
   done
+  log "Timed out while waiting for pods with selector '${selector}' to stop."
   return 1
 }
 
 scale_target() {
   replicas="$1"
-  kns scale "statefulset/${TARGET_STATEFULSET_NAME}" --replicas="${replicas}" >/dev/null
+  retry_command kns scale "statefulset/${TARGET_STATEFULSET_NAME}" --replicas="${replicas}" >/dev/null
 }
 
 clear_dir_contents() {

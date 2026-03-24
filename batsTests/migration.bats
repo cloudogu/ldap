@@ -22,6 +22,26 @@ teardown() {
   rm -f "${BATS_TMPDIR}/kubectl" "${BATS_TMPDIR}/cp"
 }
 
+@test "extract_yaml_scalar reads an unquoted top-level scalar" {
+  run bash -c '
+    . k8s/helm/files/migration/common.sh
+    printf "%s\n" "domain: example.com" | extract_yaml_scalar domain
+  '
+
+  assert_success
+  assert_output "example.com"
+}
+
+@test "extract_yaml_scalar trims whitespace and removes surrounding quotes" {
+  run bash -c '
+    . k8s/helm/files/migration/common.sh
+    printf "%s\n" "openldap_suffix:   \"dc=example,dc=com\"   " | extract_yaml_scalar openldap_suffix
+  '
+
+  assert_success
+  assert_output "dc=example,dc=com"
+}
+
 @test "validate_migration_configuration succeeds for matching domain and default suffix" {
   mock_set_status "${kubectl_mock}" 0
   mock_set_output "${kubectl_mock}" $'admin: ldap\n' 1
@@ -109,7 +129,7 @@ teardown() {
   assert_equal "$(mock_get_call_args "${kubectl_mock}" 6)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
 }
 
-@test "step 2 skips copy when no source data exists" {
+@test "step 2 fails when no source data exists" {
   source_volume="${BATS_TMPDIR}/source"
   target_volume="${BATS_TMPDIR}/target"
   mkdir -p "${source_volume}/db" "${target_volume}/db"
@@ -127,10 +147,10 @@ teardown() {
     COMMON_SH_PATH=k8s/helm/files/migration/common.sh \
     sh k8s/helm/files/migration/02-migrate-and-start-component.sh
 
-  assert_success
-  assert_line "[MIGRATION-STEP2] No source LDAP data found, skip migration copy and start target component."
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"skipped_no_source\"}}"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem scale statefulset/lop-idp-ldap --replicas=1"
+  assert_failure
+  assert_line "[MIGRATION-STEP2] Source LDAP data missing: expected ${source_volume}/db/data.mdb"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem patch dogus.k8s.cloudogu.com/ldap --type merge -p {\"spec\":{\"stopped\":false,\"pauseReconciliation\":false}}"
 }
 
 @test "step 2 only starts target when migration is already done" {

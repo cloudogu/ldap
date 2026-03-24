@@ -5,8 +5,8 @@ set -eu
 LOG_PREFIX="MIGRATION-STEP1"
 COMMON_SH_PATH="${COMMON_SH_PATH:-/scripts/common.sh}"
 # shellcheck source=/scripts/common.sh
-# shellcheck disable=SC1091
-. "${COMMON_SH_PATH}"
+# shellcheck disable=SC3046
+source "${COMMON_SH_PATH}"
 
 require_env "NAMESPACE"
 require_env "COMPONENT_CONFIGMAP_NAME"
@@ -31,17 +31,17 @@ log "Validate source and target LDAP configuration."
 validate_migration_configuration "${TARGET_GLOBAL_CONFIGMAP_NAME}" "${TARGET_GLOBAL_CONFIGMAP_KEY}"
 
 log "Stopping source LDAP dogu '${SOURCE_DOGU_NAME}'."
-k patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"stopped":true}}' >/dev/null
+kns patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"stopped":true}}' >/dev/null
 if ! wait_for_no_pods_by_selector "dogu.name=${SOURCE_DOGU_NAME}"; then
   log "Timed out while waiting for source LDAP dogu pods to stop."
   exit 1
 fi
 
 log "Pausing reconciliation for source LDAP dogu '${SOURCE_DOGU_NAME}'."
-k patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"pauseReconciliation":true}}' >/dev/null
+kns patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"pauseReconciliation":true}}' >/dev/null
 
 log "Scaling target StatefulSet '${TARGET_STATEFULSET_NAME}' to 0."
-k scale "statefulset/${TARGET_STATEFULSET_NAME}" --replicas=0 >/dev/null
+scale_target 0
 target_statefulset_pod_selector="${TARGET_POD_SELECTOR},statefulset.kubernetes.io/pod-name"
 if ! wait_for_no_pods_by_selector "${target_statefulset_pod_selector}"; then
   log "Timed out while waiting for target StatefulSet pods to stop."

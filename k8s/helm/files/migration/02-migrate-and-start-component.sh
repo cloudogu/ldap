@@ -5,8 +5,8 @@ set -eu
 LOG_PREFIX="MIGRATION-STEP2"
 COMMON_SH_PATH="${COMMON_SH_PATH:-/scripts/common.sh}"
 # shellcheck source=/scripts/common.sh
-# shellcheck disable=SC1091
-. "${COMMON_SH_PATH}"
+# shellcheck disable=SC3046
+source "${COMMON_SH_PATH}"
 
 require_env "NAMESPACE"
 require_env "COMPONENT_CONFIGMAP_NAME"
@@ -32,18 +32,15 @@ cleanup_on_error() {
     log "Step 2 failed with exit code ${rc}."
     set_migration_phase "${MIGRATION_PHASE_FAILED}"
     log "Restart source LDAP dogu '${SOURCE_DOGU_NAME}'."
-    k patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"stopped":false,"pauseReconciliation":false}}' >/dev/null
+    kns patch "dogus.k8s.cloudogu.com/${SOURCE_DOGU_NAME}" --type merge -p '{"spec":{"stopped":false,"pauseReconciliation":false}}' >/dev/null
   fi
 }
 
 trap cleanup_on_error EXIT
 
 if [ ! -f "${source_db_path}/data.mdb" ]; then
-  log "No source LDAP data found, skip migration copy and start target component."
-  set_migration_phase "${MIGRATION_PHASE_SKIPPED_NO_SOURCE}"
-  scale_target "${TARGET_REPLICAS}"
-  log "Step 2 finished successfully (no source data)."
-  exit 0
+  log "Source LDAP data missing: expected ${source_db_path}/data.mdb"
+  exit 1
 fi
 
 log "Clear target DB directory."

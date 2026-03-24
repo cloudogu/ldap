@@ -2,9 +2,15 @@ apiVersion: v1
 values:
   images:
     ldap: "registry.cloudogu.com/official/ldap:2.6.8-7"
+    kubectl: "docker.io/alpine/kubectl:1.35.2"
 patches:
   values.yaml:
     image:
       registry: "{{ registryFrom .images.ldap }}"
       repository: "{{ repositoryFrom .images.ldap }}"
       tag: "{{ tagFrom .images.ldap }}"
+    migration:
+      hook:
+        image:
+          repository: '{{ printf "%s/%s" (registryFrom .images.kubectl) (repositoryFrom .images.kubectl) }}'
+          tag: "{{ tagFrom .images.kubectl }}"
