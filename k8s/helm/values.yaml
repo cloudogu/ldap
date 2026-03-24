@@ -25,8 +25,8 @@ networkPolicies:
     ldapMapper:
       enabled: true
       matchLabels:
-        app.kubernetes.io/name: lop-idp-ldap-mapper
-        app.kubernetes.io/instance: lop-idp-ldap-mapper
+        app.kubernetes.io/name: ldap-mapper
+        app.kubernetes.io/instance: ldap-mapper
 config:
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
