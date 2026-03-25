@@ -2,7 +2,7 @@ apiVersion: v1
 values:
   images:
     ldap: "registry.cloudogu.com/official/ldap:2.6.8-7"
-    kubectl: "docker.io/alpine/kubectl:1.35.2"
+    kubectl: "docker.io/alpine/kubectl:1.35.3"
 patches:
   values.yaml:
     image:
