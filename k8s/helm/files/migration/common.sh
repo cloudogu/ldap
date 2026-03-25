@@ -129,6 +129,7 @@ get_migration_phase() {
 retry_command() {
   attempt=1
   while [ "${attempt}" -le "${RETRY_ATTEMPTS}" ]; do
+# expand the given arguments, execute it, and evaluate the exit code.
     if "$@"; then
       return 0
     fi
