@@ -42,6 +42,7 @@ get_configmap_data() {
   kns get "configmap/${configmap_name}" -o "go-template={{ index .data \"$configmap_key\" }}" 2>/dev/null || true
 }
 
+# extract_yaml_scalar expects a YAML key-value string in the format 'key: "value"\n' and returns the value without quotes. The newline is strictly required for "read" to succeed.
 extract_yaml_scalar() {
   yaml_key="$1"
 
