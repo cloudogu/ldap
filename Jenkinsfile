@@ -25,7 +25,7 @@ def componentRegistry = "registry.cloudogu.com"
 def componentRegistryNamespace = "k8s"
 def componentChartTargetDir = "target/k8s/helm"
 def componentBuildImageRepository = "registry.cloudogu.com/official/ldap"
-def componentReleaseName = "lop-idp-ldap"
+def componentReleaseName = "ldap"
 def buildToolsVersion = "1.26.0"
 
 pipe.setBuildProperties()

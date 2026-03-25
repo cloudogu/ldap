@@ -1,6 +1,9 @@
 global:
   imagePullSecrets:
     - name: "ces-container-registries"
+# Optional override for the resource base name. By default, resources use
+# "<release-name>-<chart-name>" (for example "lop-idp-ldap").
+fullnameOverride: ""
 replicas: 1
 image:
   registry: registry.cloudogu.com
@@ -16,13 +19,13 @@ networkPolicies:
     cas:
       enabled: true
       matchLabels:
-        app.kubernetes.io/instance: lop-idp-cas
-        app.kubernetes.io/name: lop-idp-cas
+        app.kubernetes.io/instance: cas
+        app.kubernetes.io/name: cas
     usermgt:
       enabled: true
       matchLabels:
-        app.kubernetes.io/name: lop-idp-usermgt
-        app.kubernetes.io/instance: lop-idp-usermgt
+        app.kubernetes.io/name: usermgt
+        app.kubernetes.io/instance: usermgt
     ldapMapper:
       enabled: true
       matchLabels:
@@ -65,21 +68,21 @@ secrets:
       enabled: true
       secret:
         create: true
-        name: "lop-idp-ldap-cas-sa"
+        name: "ldap-cas-sa"
         usernameKey: username
         passwordKey: password
     usermgt:
       enabled: true
       secret:
         create: true
-        name: "lop-idp-ldap-usermgt-sa"
+        name: "ldap-usermgt-sa"
         usernameKey: username
         passwordKey: password
     ldapMapper:
       enabled: true
       secret:
         create: true
-        name: "lop-idp-ldap-ldap-mapper-sa"
+        name: "ldap-ldap-mapper-sa"
         usernameKey: username
         passwordKey: password
 persistence:

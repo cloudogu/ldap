@@ -114,7 +114,7 @@ The migration runs automatically when the LDAP component is installed or upgrade
 Example:
 
 ```bash
-helm upgrade --install lop-idp-ldap k8s/helm \
+helm upgrade --install ldap k8s/helm \
   --namespace ecosystem \
   --set migration.enabled=true
 ```
@@ -145,9 +145,9 @@ After a successful migration, at least the following checks should be performed:
 
 ```bash
 kubectl -n ecosystem get dogu ldap -o jsonpath='{.spec.stopped}{"\n"}{.spec.pauseReconciliation}{"\n"}'
-kubectl -n ecosystem get configmap lop-idp-ldap-config -o jsonpath='{.data.migrationPhase}{"\n"}'
-kubectl -n ecosystem rollout status statefulset/lop-idp-ldap --timeout=300s
-kubectl -n ecosystem get pod -l app.kubernetes.io/instance=lop-idp-ldap
+kubectl -n ecosystem get configmap ldap-config -o jsonpath='{.data.migrationPhase}{"\n"}'
+kubectl -n ecosystem rollout status statefulset/ldap --timeout=300s
+kubectl -n ecosystem get pod -l app.kubernetes.io/instance=ldap
 ```
 
 Expected result:
@@ -155,7 +155,7 @@ Expected result:
 - `spec.stopped=true`,
 - `spec.pauseReconciliation=true`,
 - `migrationPhase=done`,
-- the StatefulSet `lop-idp-ldap` is `Ready`.
+- the StatefulSet `ldap` is `Ready`.
 
 Note:
 
@@ -182,9 +182,9 @@ Checks in the failure case:
 
 ```bash
 kubectl -n ecosystem get dogu ldap -o jsonpath='{.spec.stopped}{"\n"}{.spec.pauseReconciliation}{"\n"}'
-kubectl -n ecosystem get configmap lop-idp-ldap-config -o jsonpath='{.data.migrationPhase}{"\n"}'
-kubectl -n ecosystem logs job/lop-idp-ldap-migration-stop-source
-kubectl -n ecosystem logs job/lop-idp-ldap-migration-copy-and-start
+kubectl -n ecosystem get configmap ldap-config -o jsonpath='{.data.migrationPhase}{"\n"}'
+kubectl -n ecosystem logs job/ldap-migration-stop-source
+kubectl -n ecosystem logs job/ldap-migration-copy-and-start
 ```
 
 Expected result after a failure in step 2:

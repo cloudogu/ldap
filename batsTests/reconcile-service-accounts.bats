@@ -38,7 +38,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="cas"
     local access_type="rw"
@@ -80,7 +80,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="cas"
     local access_type="rw"
@@ -122,7 +122,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="cas"
     local access_type="rw"
@@ -160,7 +160,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="cas"
     local access_type="rw"
@@ -197,7 +197,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="cas"
     local access_type="rw"
@@ -245,7 +245,7 @@ teardown() {
     # --- Arrange ---
     LDAP_DOMAIN="cloudogu.com"
     OPENLDAP_SUFFIX="dc=cloudogu,dc=com"
-    LDAP_SA_MANAGED_TAG_PREFIX="lop-idp-ldap-managed"
+    LDAP_SA_MANAGED_TAG_PREFIX="ldap-managed"
 
     local account_id="ldap-mapper"
     local access_type="ro"
