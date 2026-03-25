@@ -14,3 +14,9 @@ patches:
         image:
           repository: '{{ printf "%s/%s" (registryFrom .images.kubectl) (repositoryFrom .images.kubectl) }}'
           tag: "{{ tagFrom .images.kubectl }}"
+    persistence:
+      resize:
+        hook:
+          image:
+            repository: '{{ printf "%s/%s" (registryFrom .images.kubectl) (repositoryFrom .images.kubectl) }}'
+            tag: "{{ tagFrom .images.kubectl }}"

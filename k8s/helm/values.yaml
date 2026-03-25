@@ -7,6 +7,7 @@ image:
   repository: official/ldap
   tag: 2.6.10-2
 imagePullPolicy: IfNotPresent
+extraLabels: {}
 service:
   port: 389
 networkPolicies:
@@ -84,6 +85,14 @@ secrets:
 persistence:
   size: 1Gi
   storageClassName: ""
+  resize:
+    enabled: true
+    hook:
+      image:
+        repository: docker.io/alpine/kubectl
+        tag: "1.35.3"
+        pullPolicy: IfNotPresent
+      backoffLimit: 0
 podSecurityContext:
   fsGroup: 101
 securityContext:
@@ -100,6 +109,12 @@ resources:
     memory: 128Mi
   limits:
     memory: 256Mi
+nodeSelector: {}
+affinity: {}
+tolerations: []
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []
 migration:
   enabled: true
   hook:
