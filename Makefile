@@ -25,6 +25,10 @@ include build/make/k8s-dogu.mk
 include build/make/k8s-component.mk
 include build/make/bats.mk
 
+.PHONY: helm-lint
+helm-lint: $(BINARY_HELM) helm-generate
+	@$(BINARY_HELM) lint "${HELM_TARGET_DIR}" --set-string globalConfig.domain=example.invalid
+
 .PHONY: helm-values-update-image-version
 helm-values-update-image-version: $(BINARY_YQ)
 	@echo "Updating the image version in source values.yaml to ${VERSION}..."

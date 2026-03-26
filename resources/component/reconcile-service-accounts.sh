@@ -65,11 +65,19 @@ ensure_removed() {
 upsert_account() {
   local account_id="$1"
   local account_ou="$2"
-  local username="$3"
+  local desired_dn="$3"
   local password="$4"
-  local desired_dn="cn=${username},ou=${account_ou},o=${LDAP_DOMAIN},${OPENLDAP_SUFFIX}"
+  local service_account_cn
   local enc_password
   local dn
+
+  # Extract the plain CN from the full bind DN for the LDAP entry payload,
+  # e.g. `cn=cas-sa,ou=Special Users,o=cloudogu.com,dc=cloudogu,dc=com` -> `cas-sa`.
+  service_account_cn="$(printf '%s' "${desired_dn}" | sed -n 's/^cn=\([^,]*\),.*$/\1/p')"
+  if [[ -z "${service_account_cn}" ]]; then
+    echo "invalid service account dn '${desired_dn}'" >&2
+    exit 1
+  fi
 
   enc_password="$(slappasswd -s "${password}")"
 
@@ -98,7 +106,7 @@ EOF
     echo "[SERVICE-ACCOUNT] creating '${desired_dn}'"
     ldapadd -Q -Y EXTERNAL -H ldapi:/// <<EOF
 dn: ${desired_dn}
-cn: ${username}
+cn: ${service_account_cn}
 objectClass: organizationalRole
 objectClass: simpleSecurityObject
 description: ${LDAP_SA_MANAGED_TAG_PREFIX}:${account_id}

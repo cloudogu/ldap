@@ -44,7 +44,7 @@ teardown() {
     local access_type="rw"
     local enabled="true"
     local temp_dir="$(mktemp -d)"
-    echo -n "cas-sa" > "${temp_dir}/username"
+    echo -n "cn=cas-sa,ou=Special Users,o=cloudogu.com,dc=cloudogu,dc=com" > "${temp_dir}/username"
     echo -n "password123" > "${temp_dir}/password"
 
     # Mock ldapsearch to return no results for this account_id (not managed yet)
@@ -86,7 +86,7 @@ teardown() {
     local access_type="rw"
     local enabled="true"
     local temp_dir="$(mktemp -d)"
-    echo -n "cas-sa" > "${temp_dir}/username"
+    echo -n "cn=cas-sa,ou=Special Users,o=cloudogu.com,dc=cloudogu,dc=com" > "${temp_dir}/username"
     echo -n "new-password" > "${temp_dir}/password"
 
     # Mock ldapsearch to return the same DN (managed account already exists)
@@ -203,7 +203,7 @@ teardown() {
     local access_type="rw"
     local enabled="true"
     local temp_dir="$(mktemp -d)"
-    echo -n "new-cas-sa" > "${temp_dir}/username"
+    echo -n "cn=new-cas-sa,ou=Special Users,o=cloudogu.com,dc=cloudogu,dc=com" > "${temp_dir}/username"
     echo -n "password123" > "${temp_dir}/password"
 
     # Mock ldapsearch for managed_dns_for_account: returns an OLD DN
@@ -251,7 +251,7 @@ teardown() {
     local access_type="ro"
     local enabled="true"
     local temp_dir="$(mktemp -d)"
-    echo -n "mapper-sa" > "${temp_dir}/username"
+    echo -n "cn=mapper-sa,ou=Bind Users,o=cloudogu.com,dc=cloudogu,dc=com" > "${temp_dir}/username"
     echo -n "pwd" > "${temp_dir}/password"
 
     # Mock searches
