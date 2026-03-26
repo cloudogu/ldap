@@ -1,0 +1,18 @@
+{{- $configMapName := printf "%s-config" (include "ldap.fullname" .) -}}
+{{- $existing := lookup "v1" "ConfigMap" .Release.Namespace $configMapName -}}
+{{- $migrationPhase := "pending" -}}
+{{- if and $existing $existing.data (hasKey $existing.data "migrationPhase") -}}
+{{- $migrationPhase = index $existing.data "migrationPhase" -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configMapName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+data:
+  config.yaml: |-
+{{ toYaml .Values.config | indent 4 }}
+  sensitive-config.yaml: |-
+    {}
+  migrationPhase: {{ $migrationPhase | quote }}

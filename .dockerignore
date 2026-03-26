@@ -1,0 +1,7 @@
+# Ignore everything
+**
+
+# Allowed files and directories
+!resources
+!dogu.json
+!LICENSE
