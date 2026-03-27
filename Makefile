@@ -1,5 +1,5 @@
 # Central configuration for both build paths.
-VERSION=2.6.10-3
+VERSION=2.6.10-4
 MAKEFILES_VERSION=10.7.0
 ARTIFACT_ID=ldap
 
