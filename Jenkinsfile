@@ -25,7 +25,7 @@ def componentRegistry = "registry.cloudogu.com"
 def componentRegistryNamespace = "k8s"
 def componentChartTargetDir = "target/k8s/helm"
 def componentBuildImageRepository = "registry.cloudogu.com/official/ldap"
-def componentReleaseName = "lop-idp-ldap"
+def componentReleaseName = "ldap"
 def buildToolsVersion = "1.26.0"
 
 pipe.setBuildProperties()
@@ -81,7 +81,7 @@ def componentStages = { group ->
             sh "sudo ${WORKSPACE}/k3d/.k3d/bin/k3d image import local-smoke/ldap:${releaseVersion} -c ${k3d.registryName}"
 
             echo "[Component k3d] Deploy component via helm"
-            k3d.helm("upgrade --install ${componentReleaseName} ${componentChartTargetDir} --namespace default --set image.registry=local-smoke --set image.repository=ldap --set image.tag=${releaseVersion} --set imagePullPolicy=Never --set migration.enabled=false --wait --timeout 5m")
+            k3d.helm("upgrade --install ${componentReleaseName} ${componentChartTargetDir} --namespace default --set fullnameOverride=${componentReleaseName} --set image.registry=local-smoke --set image.repository=ldap --set image.tag=${releaseVersion} --set imagePullPolicy=Never --set migration.enabled=false --wait --timeout 5m")
 
             echo "[Component k3d] Verify component startup"
             k3d.kubectl("rollout status statefulset/${componentReleaseName} --timeout=300s")

@@ -1,0 +1,138 @@
+{{- $fullName := include "ldap.fullname" . -}}
+{{- $hookName := printf "%s-pvc-resize-hook" $fullName -}}
+{{- $scriptsConfigMapName := printf "%s-pvc-resize-scripts" $fullName -}}
+{{- $hookImage := printf "%s:%s" .Values.persistence.resize.hook.image.repository .Values.persistence.resize.hook.image.tag -}}
+{{- $hookImagePullPolicy := .Values.persistence.resize.hook.image.pullPolicy -}}
+{{- $hookBackoffLimit := .Values.persistence.resize.hook.backoffLimit -}}
+{{- $pvcSelector := printf "app.kubernetes.io/instance=%s,app.kubernetes.io/name=%s" .Release.Name (include "ldap.name" .) -}}
+{{- if .Values.persistence.resize.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $hookName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $hookName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - patch
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $hookName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+subjects:
+  - kind: ServiceAccount
+    name: {{ $hookName }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $hookName }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $scriptsConfigMapName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+data:
+  resize-pvcs.sh: |
+{{ .Files.Get "files/pvc-resize/resize-pvcs.sh" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-run" $hookName }}
+  labels:
+    {{- include "ldap.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "2"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $hookBackoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ldap.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $hookName }}
+      restartPolicy: Never
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        runAsNonRoot: true
+      volumes:
+        - name: pvc-resize-scripts
+          configMap:
+            name: {{ $scriptsConfigMapName }}
+            defaultMode: 0555
+      containers:
+        - name: pvc-resize
+          image: {{ $hookImage | quote }}
+          imagePullPolicy: {{ $hookImagePullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - /scripts/resize-pvcs.sh
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PVC_SELECTOR
+              value: {{ $pvcSelector | quote }}
+            - name: TARGET_SIZE
+              value: {{ .Values.persistence.size | quote }}
+            - name: STATEFULSET_NAME
+              value: {{ $fullName }}
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: pvc-resize-scripts
+              mountPath: /scripts
+              readOnly: true
+{{- end }}

@@ -6,7 +6,7 @@
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- include "ldap.name" . -}}
+{{- printf "%s-%s" .Release.Name (include "ldap.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 
@@ -21,6 +21,9 @@ app: ces
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.extraLabels }}
+{{- toYaml .Values.extraLabels | nindent 0 }}
+{{- end }}
 {{- end -}}
 
 {{- define "ldap.kebab" -}}

@@ -51,7 +51,7 @@ teardown() {
 
   run bash -c '
     export NAMESPACE=ecosystem
-    export COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config
+    export COMPONENT_CONFIGMAP_NAME=ldap-config
     . k8s/helm/files/migration/common.sh
     validate_migration_configuration global-config config.yaml
   '
@@ -69,7 +69,7 @@ teardown() {
 
   run bash -c '
     export NAMESPACE=ecosystem
-    export COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config
+    export COMPONENT_CONFIGMAP_NAME=ldap-config
     . k8s/helm/files/migration/common.sh
     validate_migration_configuration global-config config.yaml
   '
@@ -89,9 +89,9 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
-    TARGET_POD_SELECTOR='app.kubernetes.io/instance=lop-idp-ldap,app.kubernetes.io/name=lop-idp-ldap' \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
+    TARGET_POD_SELECTOR='app.kubernetes.io/instance=ldap,app.kubernetes.io/name=ldap' \
     TARGET_GLOBAL_CONFIGMAP_NAME=global-config \
     TARGET_GLOBAL_CONFIGMAP_KEY=config.yaml \
     COMMON_SH_PATH=k8s/helm/files/migration/common.sh \
@@ -101,10 +101,10 @@ teardown() {
   assert_success
   assert_line "[MIGRATION-STEP1] Step 1 finished successfully."
   assert_equal "$(mock_get_call_num "${kubectl_mock}")" "10"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 1)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"running\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 1)" "ecosystem patch configmap/ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"running\"}}"
   assert_equal "$(mock_get_call_args "${kubectl_mock}" 6)" "ecosystem patch dogus.k8s.cloudogu.com/ldap --type merge -p {\"spec\":{\"stopped\":true}}"
   assert_equal "$(mock_get_call_args "${kubectl_mock}" 8)" "ecosystem patch dogus.k8s.cloudogu.com/ldap --type merge -p {\"spec\":{\"pauseReconciliation\":true}}"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 9)" "ecosystem scale statefulset/lop-idp-ldap --replicas=0"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 9)" "ecosystem scale statefulset/ldap --replicas=0"
 }
 
 @test "step 1 sets migration phase failed when configuration validation fails" {
@@ -116,9 +116,9 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
-    TARGET_POD_SELECTOR='app.kubernetes.io/instance=lop-idp-ldap,app.kubernetes.io/name=lop-idp-ldap' \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
+    TARGET_POD_SELECTOR='app.kubernetes.io/instance=ldap,app.kubernetes.io/name=ldap' \
     TARGET_GLOBAL_CONFIGMAP_NAME=global-config \
     TARGET_GLOBAL_CONFIGMAP_KEY=config.yaml \
     COMMON_SH_PATH=k8s/helm/files/migration/common.sh \
@@ -126,7 +126,7 @@ teardown() {
 
   assert_failure
   assert_line "[MIGRATION-STEP1] Migration config validation failed: domain mismatch (dogu='source.example', component='target.example')."
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 6)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 6)" "ecosystem patch configmap/ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
 }
 
 @test "step 2 fails when no source data exists" {
@@ -139,8 +139,8 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
     TARGET_REPLICAS=1 \
     SOURCE_VOLUME_PATH="${source_volume}" \
     TARGET_VOLUME_PATH="${target_volume}" \
@@ -149,7 +149,7 @@ teardown() {
 
   assert_failure
   assert_line "[MIGRATION-STEP2] Source LDAP data missing: expected ${source_volume}/db/data.mdb"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
   assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem patch dogus.k8s.cloudogu.com/ldap --type merge -p {\"spec\":{\"stopped\":false,\"pauseReconciliation\":false}}"
 }
 
@@ -159,8 +159,8 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
     TARGET_REPLICAS=2 \
     SOURCE_VOLUME_PATH="${BATS_TMPDIR}/source" \
     TARGET_VOLUME_PATH="${BATS_TMPDIR}/target" \
@@ -170,7 +170,7 @@ teardown() {
   assert_success
   assert_line "[MIGRATION-STEP2] Migration phase is 'done', ensure component is started."
   assert_equal "$(mock_get_call_num "${kubectl_mock}")" "2"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem scale statefulset/lop-idp-ldap --replicas=2"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem scale statefulset/ldap --replicas=2"
 }
 
 @test "step 2 copies source DB and marks migration done" {
@@ -187,8 +187,8 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
     TARGET_REPLICAS=1 \
     SOURCE_VOLUME_PATH="${source_volume}" \
     TARGET_VOLUME_PATH="${target_volume}" \
@@ -201,8 +201,8 @@ teardown() {
   assert_file_exist "${target_volume}/db/lock.mdb"
   assert_file_not_exist "${target_volume}/db/old-file"
   assert_file_not_exist "${target_volume}/db/run/socket"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"done\"}}"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem scale statefulset/lop-idp-ldap --replicas=1"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"done\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem scale statefulset/ldap --replicas=1"
 }
 
 @test "step 2 marks migration failed and restarts source dogu when copy result is invalid" {
@@ -220,8 +220,8 @@ teardown() {
 
   run env \
     NAMESPACE=ecosystem \
-    COMPONENT_CONFIGMAP_NAME=lop-idp-ldap-config \
-    TARGET_STATEFULSET_NAME=lop-idp-ldap \
+    COMPONENT_CONFIGMAP_NAME=ldap-config \
+    TARGET_STATEFULSET_NAME=ldap \
     TARGET_REPLICAS=1 \
     SOURCE_VOLUME_PATH="${source_volume}" \
     TARGET_VOLUME_PATH="${target_volume}" \
@@ -230,7 +230,7 @@ teardown() {
 
   assert_failure
   assert_line "[MIGRATION-STEP2] Expected target DB file missing after copy: ${target_volume}/db/data.mdb"
-  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/lop-idp-ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
+  assert_equal "$(mock_get_call_args "${kubectl_mock}" 2)" "ecosystem patch configmap/ldap-config --type merge -p {\"data\":{\"migrationPhase\":\"failed\"}}"
   assert_equal "$(mock_get_call_args "${kubectl_mock}" 3)" "ecosystem patch dogus.k8s.cloudogu.com/ldap --type merge -p {\"spec\":{\"stopped\":false,\"pauseReconciliation\":false}}"
 
   rm -f "${BATS_TMPDIR}/cp"
