@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.10-4] - 2026-03-27
+### Changed
+- [#77] Use `ldap` as component name
+  - This removes duplications in the name of the umbrella `lop-idp` component
+- [#77] Make PVC resizes possible
+
 ## [v2.6.10-3] - 2026-03-26
 ### Added
 - [#69] Release LDAP additionally as a Helm-based component for usage in LOP-IdP.

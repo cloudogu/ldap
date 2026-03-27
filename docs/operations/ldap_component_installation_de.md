@@ -52,7 +52,7 @@ Beispiel:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: lop-idp-ldap-initial-admin-password
+  name: ldap-initial-admin-password
   namespace: ecosystem
 type: Opaque
 stringData:
@@ -85,6 +85,7 @@ make component-delete
 
 | Bereich                 | Schlüssel in `values.yaml`                              | Pflicht   | Wirkung                                                                 |
 |-------------------------|---------------------------------------------------------|-----------|-------------------------------------------------------------------------|
+| Allgemein               | `fullnameOverride`                                      | Nein      | Überschreibt den Basisnamen aller erzeugten Ressourcen vollständig.     |
 | Allgemein               | `replicas`                                              | Nein      | Anzahl der Pod-Replikate im StatefulSet.                                |
 | Image & Pull            | `global.imagePullSecrets`                               | Ja        | Pull-Secret(s) für das Container-Image.                                 |
 | Image & Pull            | `image.registry`                                        | Ja        | Container-Registry des LDAP-Images.                                     |
@@ -160,6 +161,25 @@ Hinweis für ArgoCD/GitOps:
 - Das Secret liefert nur das initiale Passwort für den LDAP-Admin-User in `ou=People`.
 - Nach der ersten Initialisierung ist LDAP selbst führend. Änderungen des Passworts über UserMgt oder LDAP werden nicht in das Secret zurückgeschrieben.
 
+### Ressourcennamen bei Standalone-Installationen
+
+Standardmäßig verwendet das Chart als Basisnamen `<release-name>-<chart-name>`.
+Bei `helm install lop-idp ...` entstehen also Ressourcennamen wie `lop-idp-ldap`.
+
+Für Standalone-Installationen empfiehlt es sich, einen expliziten Release-Namen zu verwenden, zum Beispiel:
+
+```bash
+helm install ldap-component k8s/helm --set globalConfig.domain=example
+```
+
+Falls ein fester Ressourcenname unabhängig vom Release-Namen benötigt wird, kann stattdessen `fullnameOverride` gesetzt werden:
+
+```bash
+helm install test k8s/helm \
+  --set fullnameOverride=ldap-component \
+  --set globalConfig.domain=example
+```
+
 ### Beispiel-Overrides
 
 ```yaml
@@ -177,21 +197,21 @@ secrets:
       enabled: true
       secret:
         create: true
-        name: lop-idp-ldap-cas-sa
+        name: ldap-cas-sa
         usernameKey: username
         passwordKey: password
     usermgt:
       enabled: true
       secret:
         create: true
-        name: lop-idp-ldap-usermgt-sa
+        name: ldap-usermgt-sa
         usernameKey: username
         passwordKey: password
     ldapMapper:
       enabled: true
       secret:
         create: true
-        name: lop-idp-ldap-ldap-mapper-sa
+        name: ldap-ldap-mapper-sa
         usernameKey: username
         passwordKey: password
 ```

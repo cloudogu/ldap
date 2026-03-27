@@ -38,7 +38,7 @@ RUN set -eux -o pipefail \
 FROM ldap-common AS dogu
 
 LABEL NAME="official/ldap" \
-      VERSION="2.6.10-3" \
+      VERSION="2.6.10-4" \
       maintainer="hello@cloudogu.com"
 
 RUN set -eux -o pipefail \

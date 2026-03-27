@@ -15,7 +15,8 @@ spec:
       labels:
         {{- include "ldap.labels" . | nindent 8 }}
       annotations:
-        checksum/component-config: {{ include (print $.Template.BasePath "/component-configmap.yaml") . | sha256sum }}
+        {{/* trigger a rolling restart when the config changes (including pvc resizes) */}}
+        checksum/config: {{ printf "%s|%s" (include (print $.Template.BasePath "/component-configmap.yaml") .) .Values.persistence.size | sha256sum }}
     spec:
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
@@ -23,6 +24,18 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: init-persistence-layout
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -71,6 +84,9 @@ spec:
                 secretKeyRef:
                   name: {{ include "ldap.initialAdminPasswordSecretName" . | quote }}
                   key: {{ required "values.secrets.initialAdminPasswordSecretRef.passwordKey is required" .Values.secrets.initialAdminPasswordSecretRef.passwordKey | quote }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
@@ -123,6 +139,9 @@ spec:
             - name: sa-secret-ldap-mapper
               mountPath: /etc/ces/service-accounts/ldapMapper
               readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
         # Recreated on each Pod start; init container repopulates it from image /etc/openldap.
@@ -179,6 +198,9 @@ spec:
                 path: username
               - key: {{ .Values.secrets.serviceAccounts.ldapMapper.secret.passwordKey | default "password" | quote }}
                 path: password
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
   volumeClaimTemplates:
     - metadata:
