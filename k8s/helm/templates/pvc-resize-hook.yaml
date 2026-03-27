@@ -119,6 +119,10 @@ spec:
               value: {{ $pvcSelector | quote }}
             - name: TARGET_SIZE
               value: {{ .Values.persistence.size | quote }}
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
           volumeMounts:
             - name: pvc-resize-scripts
               mountPath: /scripts
