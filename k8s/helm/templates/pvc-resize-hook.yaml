@@ -36,6 +36,12 @@ rules:
       - get
       - list
       - patch
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -119,6 +125,8 @@ spec:
               value: {{ $pvcSelector | quote }}
             - name: TARGET_SIZE
               value: {{ .Values.persistence.size | quote }}
+            - name: STATEFULSET_NAME
+              value: {{ $fullName }}
           securityContext:
             capabilities:
               drop:

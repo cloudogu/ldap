@@ -24,6 +24,7 @@ patch_pvc_size() {
 require_env "NAMESPACE"
 require_env "PVC_SELECTOR"
 require_env "TARGET_SIZE"
+require_env "STATEFULSET_NAME"
 
 pvc_names="$(kubectl -n "${NAMESPACE}" get pvc -l "${PVC_SELECTOR}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')"
 if [ -z "${pvc_names}" ]; then
@@ -31,10 +32,13 @@ if [ -z "${pvc_names}" ]; then
   exit 0
 fi
 
+didResize="false"
+
 for pvc_name in ${pvc_names}; do
   log "Ensure PVC '${pvc_name}' requests ${TARGET_SIZE}."
   if output="$(patch_pvc_size "${pvc_name}" 2>&1)"; then
     log "PVC '${pvc_name}' patched successfully."
+    didResize="true"
     continue
   fi
 
@@ -48,5 +52,10 @@ for pvc_name in ${pvc_names}; do
       ;;
   esac
 done
+
+if [ "${didResize}" = "true" ]; then
+  kubectl -n "${NAMESPACE}" delete sts --cascade=orphan "${STATEFULSET_NAME}"
+  log "deleted statefulset after PVC resize"
+fi
 
 log "done checking PVCs for resizing."
