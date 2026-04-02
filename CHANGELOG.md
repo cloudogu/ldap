@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.10-5] - 2026-04-02
+### Fixed
+- [#79] Component PVC now contains all labels including those in `extraLabels`.
+
 ## [v2.6.10-4] - 2026-03-27
 ### Changed
 - [#77] Use `ldap` as component name
