@@ -19,18 +19,18 @@ networkPolicies:
     cas:
       enabled: true
       matchLabels:
-        app.kubernetes.io/instance: cas
+        app.kubernetes.io/instance: lop-idp
         app.kubernetes.io/name: cas
     usermgt:
       enabled: true
       matchLabels:
+        app.kubernetes.io/instance: lop-idp
         app.kubernetes.io/name: usermgt
-        app.kubernetes.io/instance: usermgt
     ldapMapper:
       enabled: true
       matchLabels:
+        app.kubernetes.io/instance: lop-idp
         app.kubernetes.io/name: ldap-mapper
-        app.kubernetes.io/instance: ldap-mapper
 config:
   # Component configuration keys aligned with dogu.json (excluding container_config/*).
   password_change:
