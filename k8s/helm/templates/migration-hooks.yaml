@@ -3,6 +3,7 @@
 {{- $hookServiceAccount := printf "%s-migration-hook" $fullName -}}
 {{- $scriptsConfigMapName := printf "%s-migration-scripts" $fullName -}}
 {{- $componentConfigMapName := printf "%s-config" $fullName -}}
+{{- $sourceExists := eq (include "ldap.sourceDoguExists" .) "true" -}}
 
 {{- /* Fixed source/target PVC names for the current migration flow */ -}}
 {{- $sourcePVCName := "ldap" -}}
@@ -14,7 +15,7 @@
 {{- if and $componentConfigMap $componentConfigMap.data (hasKey $componentConfigMap.data "migrationPhase") -}}
 {{- $migrationPhase = index $componentConfigMap.data "migrationPhase" -}}
 {{- end -}}
-{{- $migrationFinished := or (eq $migrationPhase "done") (eq $migrationPhase "skipped_no_source") -}}
+{{- $migrationFinished := or (eq $migrationPhase "done") (eq $migrationPhase "skipped_no_source") (not $sourceExists) -}}
 
 {{- /* Runtime values for the hook jobs */ -}}
 {{- $targetSelector := printf "app.kubernetes.io/instance=%s,app.kubernetes.io/name=%s" .Release.Name (include "ldap.name" .) -}}
