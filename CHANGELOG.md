@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.10-6] - 2026-04-10
+### Fixed
+- [#82] match-labels on network policies to work with lop-idp.
+
+### Changed
+- The data-migration from the ldap-dogu is skipped if the dogu does not exist.
+
 ## [v2.6.10-5] - 2026-04-02
 ### Fixed
 - [#79] Component PVC now contains all labels including those in `extraLabels`.
