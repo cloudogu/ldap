@@ -75,6 +75,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- required "global domain is required to render LDAP service account secrets" $domain -}}
 {{- end -}}
 
+{{- define "ldap.sourceDoguExists" -}}
+{{- $root := . -}}
+{{- if $root.Capabilities.APIVersions.Has "k8s.cloudogu.com/v2/Dogu" -}}
+{{- $sourceDogu := lookup "k8s.cloudogu.com/v2" "Dogu" $root.Release.Namespace "ldap" -}}
+{{- if and $sourceDogu $sourceDogu.metadata -}}true{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "ldap.serviceAccountOu" -}}
 {{- if eq . "rw" -}}Special Users{{- else -}}Bind Users{{- end -}}
 {{- end -}}

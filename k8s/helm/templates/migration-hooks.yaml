@@ -3,8 +3,7 @@
 {{- $hookServiceAccount := printf "%s-migration-hook" $fullName -}}
 {{- $scriptsConfigMapName := printf "%s-migration-scripts" $fullName -}}
 {{- $componentConfigMapName := printf "%s-config" $fullName -}}
-{{- $sourceDogu := lookup "k8s.cloudogu.com/v2" "Dogu" .Release.Namespace "ldap" -}}
-{{- $sourceExists := and $sourceDogu $sourceDogu.metadata -}}
+{{- $sourceExists := eq (include "ldap.sourceDoguExists" .) "true" -}}
 
 {{- /* Fixed source/target PVC names for the current migration flow */ -}}
 {{- $sourcePVCName := "ldap" -}}
