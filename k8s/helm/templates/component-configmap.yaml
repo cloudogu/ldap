@@ -1,8 +1,12 @@
 {{- $configMapName := printf "%s-config" (include "ldap.fullname" .) -}}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace $configMapName -}}
+{{- $sourceDogu := lookup "k8s.cloudogu.com/v2" "Dogu" .Release.Namespace "ldap" -}}
+{{- $sourceExists := and $sourceDogu $sourceDogu.metadata -}}
 {{- $migrationPhase := "pending" -}}
 {{- if and $existing $existing.data (hasKey $existing.data "migrationPhase") -}}
 {{- $migrationPhase = index $existing.data "migrationPhase" -}}
+{{- else if and .Values.migration.enabled (not $sourceExists) -}}
+{{- $migrationPhase = "skipped_no_source" -}}
 {{- end -}}
 apiVersion: v1
 kind: ConfigMap
