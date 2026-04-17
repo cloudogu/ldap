@@ -26,6 +26,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end -}}
 
+{{- define "ldap.backupLabels"  -}}
+k8s.cloudogu.com/backup-scope: ldap
+{{- end }}
+
+{{- define "cas.backupScaleDownLabels"  -}}
+k8s.cloudogu.com/restore-scaledown-scope: ldap
+{{- end }}
+
 {{- define "ldap.kebab" -}}
 {{- /* Split each lower/digit + upper boundary (`([a-z0-9])([A-Z])`) and insert `-` between `${1}` and `${2}`. */ -}}
 {{- /* The replacement is applied globally, so `fooBarLongWord` becomes `foo-Bar-Long-Word` and then `foo-bar-long-word`. */ -}}
@@ -117,6 +125,7 @@ metadata:
   name: {{ $secretName }}
   labels:
     {{- include "ldap.labels" $root | nindent 4 }}
+    {{- include "ldap.backupLabels" . | nindent 4 }}
 type: Opaque
 data:
   {{ $usernameKey | quote }}: {{ $username | b64enc | quote }}

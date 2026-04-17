@@ -3,7 +3,8 @@ kind: StatefulSet
 metadata:
   name: {{ include "ldap.fullname" . }}
   labels:
-    {{- include "ldap.labels" . | nindent 4 }}
+    {{ include "ldap.labels" . | nindent 4 }}
+    {{ include "cas.backupScaleDownLabels" . | nindent 4 }}
 spec:
   serviceName: {{ include "ldap.fullname" . }}
   replicas: {{ .Values.replicas | default 1 }}
@@ -208,6 +209,7 @@ spec:
         labels:
           app: ces
           {{- include "ldap.labels" . | nindent 10 }}
+          {{- include "ldap.backupLabels" . | nindent 10 }}
       spec:
         accessModes:
           - ReadWriteOnce
