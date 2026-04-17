@@ -13,6 +13,7 @@ metadata:
   name: {{ $configMapName }}
   labels:
     {{- include "ldap.labels" . | nindent 4 }}
+    {{- include "ldap.backupLabels" . | nindent 4 }}
 data:
   config.yaml: |-
 {{ toYaml .Values.config | indent 4 }}

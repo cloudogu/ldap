@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.10-7] - 2026-04-17
+### Added
+- [#81] Added label `k8s.cloudogu.com/backup-scope` to include necessary k8s ressources in the backup for the ldap Helm-based component.
+
 ## [v2.6.10-6] - 2026-04-10
 ### Fixed
 - [#82] match-labels on network policies to work with lop-idp.
