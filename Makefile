@@ -1,6 +1,6 @@
 # Central configuration for both build paths.
 VERSION=2.6.10-7
-MAKEFILES_VERSION=10.7.0
+MAKEFILES_VERSION=10.9.1
 ARTIFACT_ID=ldap
 
 STAGE?=production
