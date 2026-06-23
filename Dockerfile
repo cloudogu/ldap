@@ -1,6 +1,6 @@
 ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.23.3-5
-ARG ALPINE_BASE_IMAGE=alpine:3.23
-ARG OPENLDAP_PKG_VER=2.6.10-r0
+ARG ALPINE_BASE_IMAGE=alpine:3.24
+ARG OPENLDAP_PKG_VER=2.6.13-r0
 
 FROM scratch AS ldap-resources
 COPY ./resources /
