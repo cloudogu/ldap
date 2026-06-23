@@ -1,4 +1,4 @@
-ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.23.3-5
+ARG DOGU_BASE_IMAGE=registry.cloudogu.com/official/base:3.24.0-1
 ARG ALPINE_BASE_IMAGE=alpine:3.24
 ARG OPENLDAP_PKG_VER=2.6.13-r0
 
