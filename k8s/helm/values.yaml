@@ -8,7 +8,7 @@ replicas: 1
 image:
   registry: registry.cloudogu.com
   repository: official/ldap
-  tag: 2.6.10-7
+  tag: 2.6.13-1
 imagePullPolicy: IfNotPresent
 extraLabels: {}
 service:

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.13-1] - 2026-06-24
+### Changed
+- [#85] Update OpenLDAP to v2.6.13-r0
+- [#85] Update base image to v3.24.0-1
+
 ## [v2.6.10-7] - 2026-04-17
 ### Added
 - [#81] Added label `k8s.cloudogu.com/backup-scope` to include necessary k8s ressources in the backup for the ldap Helm-based component.
