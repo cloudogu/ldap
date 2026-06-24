@@ -1,10 +1,10 @@
 # Central configuration for both build paths.
-VERSION=2.6.10-7
-MAKEFILES_VERSION=10.7.0
+VERSION=2.6.13-0
+MAKEFILES_VERSION=10.9.1
 ARTIFACT_ID=ldap
 
 STAGE?=production
-BINARY_HELM_VERSION?=v3.20.0
+BINARY_HELM_VERSION?=v3.20.2
 HELM_SOURCE_DIR=k8s/helm
 
 IMAGE?=registry.cloudogu.com/official/ldap:$(VERSION)
