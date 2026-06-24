@@ -4,7 +4,7 @@ MAKEFILES_VERSION=10.9.1
 ARTIFACT_ID=ldap
 
 STAGE?=production
-BINARY_HELM_VERSION?=v3.20.0
+BINARY_HELM_VERSION?=v3.20.2
 HELM_SOURCE_DIR=k8s/helm
 
 IMAGE?=registry.cloudogu.com/official/ldap:$(VERSION)
