@@ -244,6 +244,7 @@ fi
 startInitDBDaemon
 
 # apply all ldif files that contain "patch" in the name
+# patches should be idempotent
 shopt -s nullglob
 for f in $(find /srv/openldap/ldif.d -type f -name "*patch*.ldif*" | sort); do
   echo >&2 "applying patch $f"
