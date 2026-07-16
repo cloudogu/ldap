@@ -243,6 +243,15 @@ fi
 # does password entry already exists?
 startInitDBDaemon
 
+# apply all ldif files that contain "patch" in the name
+shopt -s nullglob
+for f in $(find /srv/openldap/ldif.d -type f -name "*patch*.ldif*" | sort); do
+  echo >&2 "applying patch $f"
+  doguctl template "$f" "${f//".tpl"/""}"
+  ldapmodify -f "${f//".tpl"/""}" 2>&1
+done
+shopt -u nullglob
+
 installPwdPolicyIfNecessary
 installCespersonIfNecessary
 installSSSVLVIfNecessary
