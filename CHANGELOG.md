@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.13-2] - 2026-07-17
+### Changed
+- [#88] Changed default group descriptions
+  - groups cesAdmin and cesManager now better reflect the meaning of the roles
+  - groups descriptions are now in german
+  - the change will be visible in the usermgt dogu
+
 ## [v2.6.13-1] - 2026-06-24
 ### Changed
 - [#85] Update OpenLDAP to v2.6.13-r0
