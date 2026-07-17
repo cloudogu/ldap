@@ -9,8 +9,8 @@ update_versions_modify_files() {
   local valuesYAML="k8s/helm/values.yaml"
   local componentPatchTplYAML="k8s/helm/component-patch-tpl.yaml"
 
-  yq -i ".image.tag = \"${newReleaseVersion}\"" "${valuesYAML}"
-  yq -i ".values.images.ldap |= sub(\":[^:]+$\", \":${newReleaseVersion}\")" "${componentPatchTplYAML}"
+  .bin/yq -i ".image.tag = \"${newReleaseVersion}\"" "${valuesYAML}"
+  .bin/yq -i ".values.images.ldap |= sub(\":[^:]+$\", \":${newReleaseVersion}\")" "${componentPatchTplYAML}"
 }
 
 update_versions_stage_modified_files() {
