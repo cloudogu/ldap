@@ -9,7 +9,7 @@ An organisational unit (OU) with corresponding names has been created in LDAP fo
 
 To retrieve all entries under the OU `Policies`, the following commands can be executed:
 
-1. Calling the bash shell inside the LDAP Docker container: `docker exec -it ldap bash`.
+1. Calling the bash shell inside the LDAP Docker container: `kubectl exec -n ecosystem -it $(kubectl get pod -n ecosystem -l dogu.name=ldap -o jsonpath='{.items[0].metadata.name}') -- bash`.
 2. Perform LDAP search: `ldapsearch -b "ou=Policies,o=ces.local,dc=cloudogu,dc=com"`<br>
    This command returns all entries that can be found below this entry as well as the entry itself. The Default Password
    Policy is subordinate to this entry.<br>

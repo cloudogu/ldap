@@ -10,7 +10,7 @@ Für Richtlinien ist im LDAP eine Organisational Unit (OU) mit entsprechenden Na
 
 Um alle Einträge unter der OU `Policies` abzurufen, können folgende Befehle ausgeführt werden:
 
-1. Aufrufen der bash-Shell innerhalb des LDAP-Docker-Containers: `docker exec -it ldap bash`
+1. Aufrufen der bash-Shell innerhalb des LDAP-Docker-Containers: `kubectl exec -n ecosystem -it $(kubectl get pod -n ecosystem -l dogu.name=ldap -o jsonpath='{.items[0].metadata.name}') -- bash`
 2. Ausführen der LDAP-Suche: `ldapsearch -b "ou=Policies,o=ces.local,dc=cloudogu,dc=com"`<br>
    Dieser Befehl liefert alle Einträge, die unterhalb dieses Eintrags zu finden sind, sowie den Eintrag selbst zurück.
    Die Standard-Passwort-Richtlinie ist diesem Eintrag untergeordnet.<br>
