@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.14-1] - 2026-09-02
+### Changed
+- [#90] Update OpenLDAP to v2.6.13-r0
+### Added
+- [#90] update docs for multinode
+
 ## [v2.6.13-2] - 2026-07-17
 ### Changed
 - [#88] Changed default group descriptions
