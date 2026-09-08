@@ -14,7 +14,6 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
                             resources/scheduled_jobs.sh
                             resources/send-mail-after-changed-password.sh
                             resources/startup.sh
-                            resources/rotate-root-password.sh
                             resources/srv/openldap/create-sa.sh
                             resources/srv/openldap/remove-sa.sh
                           '''],

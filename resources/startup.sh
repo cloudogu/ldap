@@ -33,9 +33,6 @@ source increase-user-search-limit.sh
 source set-mdb-size-limit.sh
 
 # shellcheck disable=SC1091
-source /rotate-root-password.sh
-
-# shellcheck disable=SC1091
 source /scheduled_jobs.sh
 
 LOGLEVEL=${LOGLEVEL:-0}
@@ -261,10 +258,6 @@ installCespersonIfNecessary
 installSSSVLVIfNecessary
 increaseUserSearchLimit
 setMdbSizeLimit
-
-# Set the backend root password (olcRootPW) on every start. See
-# rotate-root-password.sh for why this is unconditional.
-applyRootPassword
 
 echo "[DOGU] Reconcile LDAP service accounts ..."
 /component/reconcile-service-accounts.sh
