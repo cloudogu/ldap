@@ -6,9 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Security
-- [#92] The password of the LDAP root DN is now set on every dogu start
+- [#94] The password of the LDAP root DN is now set on every dogu start
   - Previously it was generated once during the very first start and never renewed.
-  - On instances that were first installed with a dogu version with base image `doguctl` < 0.12.2, that value originates from Go's `math/rand` instead of `crypto/rand` and is still active today.
+  - On instances first installed with ldap <= v2.6.7-4, whose base image shipped `doguctl` < 0.12.2, that value originates from Go's `math/rand` instead of `crypto/rand` and is still active today.
   - If `rootpwd` is unset, a fresh random password is generated on every start.
   - The value is not stored anywhere, which is intended: no dogu uses the root DN.
   - If `rootpwd` is set, that value is now actually applied.

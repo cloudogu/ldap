@@ -141,7 +141,7 @@
     },
     {
       "Name": "rootpwd",
-      "Description": "The LDAP root password (olcRootPW). If left unset, a random password will be generated.",
+      "Description": "The LDAP root password (olcRootPW), applied on every start. If left unset, a new random password is generated on every start.",
       "Optional": true,
       "Encrypted": true
     },
