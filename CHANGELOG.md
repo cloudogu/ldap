@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- [#92] The password of the LDAP root DN is now set on every dogu start
+  - Previously it was generated once during the very first start and never renewed.
+  - On instances that were first installed with a dogu version with base image `doguctl` < 0.12.2, that value originates from Go's `math/rand` instead of `crypto/rand` and is still active today.
+  - If `rootpwd` is unset, a fresh random password is generated on every start.
+  - The value is not stored anywhere, which is intended: no dogu uses the root DN.
+  - If `rootpwd` is set, that value is now actually applied.
+  - Until now, setting the key after the first start had no effect at all, because the rendered `slapd-config.ldif` was never applied again.
+  - Service accounts in `ou=Bind Users` and `ou=Special Users` and the CES admin user in `ou=People` are not affected.
+  - Deliberately no marker to rotate only once, unlike other dogus: nothing consumes this password.
+  - So a marker could only claim "done" while a weak value is still active - for instance after a restore from backup, where the old `olcRootPW` returns with the volume.
 
 ## [v2.6.14-1] - 2026-09-02
 ### Changed
