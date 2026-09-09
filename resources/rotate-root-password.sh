@@ -5,6 +5,7 @@
 # belongs to olcRootDN (cn=admin). So on instances first installed with a base
 # image shipping doguctl < 0.12.2 still hold a `math/rand` (unsecure) value.
 # Service accounts and the CES admin user are not touched.
+# olc => open ldap configuration
 set -o errexit
 set -o nounset
 set -o pipefail
