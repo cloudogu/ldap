@@ -11,12 +11,13 @@ log_debug "##########"
 START_OF_THE_PERIOD_CONF_FILE=/tmp/send-mail-after-changed-password_starting-period
 if [ ! -f "$START_OF_THE_PERIOD_CONF_FILE" ]; then
   log_debug "${START_OF_THE_PERIOD_CONF_FILE} does not exist. Now create these"
-  echo "START_OF_THE_PERIOD=$(date +%Y%m%d%H%M%S)" >${START_OF_THE_PERIOD_CONF_FILE}
+  echo "START_OF_THE_PERIOD=$(date --utc +%Y%m%d%H%M%S)" >${START_OF_THE_PERIOD_CONF_FILE}
 fi
 # shellcheck disable=SC1090
 source ${START_OF_THE_PERIOD_CONF_FILE}
 
-SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
+# pwdChangedTime is stored in UTC, so the period must be in UTC as well, regardless of the container's TZ.
+SCRIPT_START_DATE=$(date --utc +%Y%m%d%H%M%S)
 # Persist the start time of the script to be able to use this start point for the next script execution.
 echo "START_OF_THE_PERIOD=${SCRIPT_START_DATE}" >${START_OF_THE_PERIOD_CONF_FILE}
 

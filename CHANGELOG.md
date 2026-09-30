@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#97] Send password-change notification mails regardless of the container time zone
+  - The check compared `pwdChangedTime` (UTC) with the container-local time. Since cesapp 7.11.5 sets `TZ` to the host zone, no password change was detected.
 
 ## [v2.6.15-1] - 2026-09-10
 ### Changed
