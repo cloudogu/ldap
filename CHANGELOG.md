@@ -5,9 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v2.6.15-2] - 2026-10-01
 ### Changed
 - [#97] Update OpenLDAP to v2.6.15-r0
-  - v2.6.14-r0 is no longer available in the Alpine 3.24 repository, which broke the build
 - [#97] The dogu uses the time zone provided by the environment instead of a fixed UTC
   - Log output of the password-change notification shows local time
 
