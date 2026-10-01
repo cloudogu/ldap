@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - [#97] Update OpenLDAP to v2.6.15-r0
   - v2.6.14-r0 is no longer available in the Alpine 3.24 repository, which broke the build
+- [#97] The dogu uses the time zone provided by the environment instead of a fixed UTC
+  - Log output of the password-change notification shows local time
+
+### Fixed
+- [#97] Send password-change notification mails regardless of the container time zone
+  - The check compared `pwdChangedTime` (UTC) with the container-local time. Since cesapp 7.11.5 sets `TZ` to the host zone, no password change was detected.
+  - The check now compares seconds since epoch.
 
 ## [v2.6.15-1] - 2026-09-10
 ### Changed

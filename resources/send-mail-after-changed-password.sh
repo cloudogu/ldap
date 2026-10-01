@@ -11,16 +11,18 @@ log_debug "##########"
 START_OF_THE_PERIOD_CONF_FILE=/tmp/send-mail-after-changed-password_starting-period
 if [ ! -f "$START_OF_THE_PERIOD_CONF_FILE" ]; then
   log_debug "${START_OF_THE_PERIOD_CONF_FILE} does not exist. Now create these"
-  echo "START_OF_THE_PERIOD=$(date +%Y%m%d%H%M%S)" >${START_OF_THE_PERIOD_CONF_FILE}
+  echo "START_OF_THE_PERIOD=$(date +%s)" >${START_OF_THE_PERIOD_CONF_FILE}
 fi
 # shellcheck disable=SC1090
 source ${START_OF_THE_PERIOD_CONF_FILE}
 
-SCRIPT_START_DATE=$(date +%Y%m%d%H%M%S)
+# The period is kept in seconds since epoch, which do not depend on the container's TZ.
+SCRIPT_START_DATE=$(date +%s)
 # Persist the start time of the script to be able to use this start point for the next script execution.
 echo "START_OF_THE_PERIOD=${SCRIPT_START_DATE}" >${START_OF_THE_PERIOD_CONF_FILE}
 
-log_debug "Start the detection of changed user passwords since ${START_OF_THE_PERIOD}. Script starting time is ${SCRIPT_START_DATE}"
+DISPLAY_DATE_FORMAT="+%Y-%m-%d %H:%M:%S %Z"
+log_debug "Start the detection of changed user passwords since $(date -d "@${START_OF_THE_PERIOD}" "${DISPLAY_DATE_FORMAT}"). Script starting time is $(date -d "@${SCRIPT_START_DATE}" "${DISPLAY_DATE_FORMAT}")"
 
 FQDN="$(doguctl config --global fqdn)"
 
@@ -113,12 +115,15 @@ while read -r dnStr; do
     continue
   fi
 
+  # pwdChangedTime is an LDAP GeneralizedTime and therefore always UTC, so it is read as UTC and converted to seconds since epoch.
+  pwdChangedEpoch="$(date -u -D %Y%m%d%H%M%S -d "${pwdChangedTime}" +%s)"
+
   # When the password change date has occurred after the relevant start of the period, send the user an e-mail with the info about the changed password
-  if [[ ${pwdChangedTime} -ge ${START_OF_THE_PERIOD} && ${pwdChangedTime} -lt ${SCRIPT_START_DATE} ]]; then
+  if [[ ${pwdChangedEpoch} -ge ${START_OF_THE_PERIOD} && ${pwdChangedEpoch} -lt ${SCRIPT_START_DATE} ]]; then
     logmsg="${MAIL_BODY}"
     logmsg="$(echo -e "${logmsg}" | sed "s/%name/${name}/; s/%uid/${uid}/;")"
     echo "${logmsg}" | send_password_change_mail "${mail}" >&2
-    echo "The password of the user '$uid' has been changed on ${pwdChangedTime}. E-mail sent to the assigned address."
+    echo "The password of the user '$uid' has been changed on $(date -d "@${pwdChangedEpoch}" "${DISPLAY_DATE_FORMAT}"). E-mail sent to the assigned address."
   fi
 done <${result_file}
 

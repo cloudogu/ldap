@@ -24,8 +24,6 @@ RUN set -eux -o pipefail \
                      su-exec \
     && rm -rf /var/cache/apk/*
 
-# Set UTC as default timezone to ensure consistent behavior across environments.
-ENV TZ=UTC
 EXPOSE 389
 
 COPY --from=ldap-resources / /
