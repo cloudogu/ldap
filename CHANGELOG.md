@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.15-3] - 2026-11-02
+
+### Fixed
+- [#100] Allow configurable "From" email address for LDAP password reset notifications
+
 ## [v2.6.15-2] - 2026-10-01
 ### Changed
 - [#97] Update OpenLDAP to v2.6.15-r0
