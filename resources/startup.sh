@@ -258,6 +258,8 @@ shopt -u nullglob
 
 installPwdPolicyIfNecessary
 installCespersonIfNecessary
+# Schema and user updates require the local initdb daemon to be running.
+updateCespersonSchemaIfNecessary
 installSSSVLVIfNecessary
 increaseUserSearchLimit
 setMdbSizeLimit
