@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.15-4] - 2026-11-11
+### Added
+- [#102] Add `technical` Flag for cespersons to identify Robot-Accounts 
+  - All existing accounts are flagged as technical-false 
+
 ## [v2.6.15-3] - 2026-11-02
 
 ### Fixed
